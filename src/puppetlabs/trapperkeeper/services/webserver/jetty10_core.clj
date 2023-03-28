@@ -1,4 +1,4 @@
-(ns puppetlabs.trapperkeeper.services.webserver.jetty9-core
+(ns puppetlabs.trapperkeeper.services.webserver.jetty10-core
   (:import (org.eclipse.jetty.server Handler Server Request ServerConnector
                                      HttpConfiguration HttpConnectionFactory
                                      ConnectionFactory AbstractConnectionFactory)
@@ -24,15 +24,15 @@
            (org.eclipse.jetty.jmx MBeanContainer)
            (org.eclipse.jetty.util URIUtil BlockingArrayQueue)
            (java.io IOException)
-           (com.puppetlabs.trapperkeeper.services.webserver.jetty9.utils InternalSslContextFactory)
+           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils InternalSslContextFactory)
            (com.puppetlabs.ssl_utils SSLUtils))
 
   (:require [ring.util.servlet :as servlet]
             [ring.util.codec :as codec]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-config :as config]
-            [puppetlabs.trapperkeeper.services.webserver.experimental.jetty9-websockets :as websockets]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-config :as config]
+            [puppetlabs.trapperkeeper.services.webserver.experimental.jetty10-websockets :as websockets]
             [puppetlabs.trapperkeeper.services.webserver.normalized-uri-helpers
              :as normalized-uri-helpers]
             [puppetlabs.trapperkeeper.services.protocols.filesystem-watch-service
@@ -958,16 +958,16 @@
 
 (defn start-server-single-default
   [context config]
-  (let [default-context     (:default (:jetty9-servers context))
+  (let [default-context     (:default (:jetty10-servers context))
         webserver           (start-webserver! default-context config)
-        server-context-list (assoc (:jetty9-servers context) :default webserver)]
-    (assoc context :jetty9-servers server-context-list)))
+        server-context-list (assoc (:jetty10-servers context) :default webserver)]
+    (assoc context :jetty10-servers server-context-list)))
 
 (defn start-server-multiple
   [context config]
-  (let [context-seq (for [[server-id server-context] (:jetty9-servers context)]
+  (let [context-seq (for [[server-id server-context] (:jetty10-servers context)]
                       [server-id (start-webserver! server-context (server-id config))])]
-    (assoc context :jetty9-servers (into {} context-seq))))
+    (assoc context :jetty10-servers (into {} context-seq))))
 
 (defn get-server-context
   [service-context server-id]
@@ -977,7 +977,7 @@
     (when-not server-id
       (throw (IllegalArgumentException.
                (i18n/trs "no server-id was specified for this operation and no default server was specified in the configuration"))))
-    (server-id (:jetty9-servers service-context))))
+    (server-id (:jetty10-servers service-context))))
 
 (defn get-default-server-from-config
   [config]
@@ -985,7 +985,7 @@
 
 (defn build-server-contexts
   [context config]
-  (assoc context :jetty9-servers (into {} (for [[server-id] config]
+  (assoc context :jetty10-servers (into {} (for [[server-id] config]
                                             [server-id (initialize-context)]))
                  :default-server (get-default-server-from-config config)))
 
@@ -1036,7 +1036,7 @@
         new-config (schema/check config/MultiWebserverRawConfig config)]
     (cond
       (nil? old-config)
-        (let [context (assoc context :jetty9-servers {:default (initialize-context)}
+        (let [context (assoc context :jetty10-servers {:default (initialize-context)}
                                      :default-server :default)]
           (doseq [content (:static-content config)]
             (add-context-handler! context (:resource content)

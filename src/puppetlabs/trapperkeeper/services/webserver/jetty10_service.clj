@@ -1,9 +1,9 @@
-(ns puppetlabs.trapperkeeper.services.webserver.jetty9-service
+(ns puppetlabs.trapperkeeper.services.webserver.jetty10-service
   (:require
     [clojure.tools.logging :as log]
 
-    [puppetlabs.trapperkeeper.services.webserver.jetty9-config :as config]
-    [puppetlabs.trapperkeeper.services.webserver.jetty9-core :as core]
+    [puppetlabs.trapperkeeper.services.webserver.jetty10-config :as config]
+    [puppetlabs.trapperkeeper.services.webserver.jetty10-core :as core]
     [puppetlabs.trapperkeeper.services.protocols.filesystem-watch-service
      :as watch-protocol]
     [puppetlabs.trapperkeeper.services :refer [get-service
@@ -28,7 +28,7 @@
   (log-registered-endpoints [this] [this server-id])
   (join [this] [this server-id]))
 
-(defservice jetty9-service
+(defservice jetty10-service
   "Provides a Jetty 9 web server as a service"
   WebserverService
   {:required [ConfigService]
@@ -54,7 +54,7 @@
            (if-let [filesystem-watcher-service
                     (maybe-get-service this :FilesystemWatchService)]
              (let [watcher (watch-protocol/create-watcher filesystem-watcher-service {:recursive false})]
-               (doseq [server (:jetty9-servers started-context)]
+               (doseq [server (:jetty10-servers started-context)]
                  (when-let [ssl-context-factory (-> server
                                                     second
                                                     :state
@@ -66,8 +66,8 @@
 
   (stop [this context]
         (log/info (i18n/trs "Shutting down web server(s)."))
-        (doseq [key (keys (:jetty9-servers context))]
-          (if-let [server (key (:jetty9-servers context))]
+        (doseq [key (keys (:jetty10-servers context))]
+          (if-let [server (key (:jetty10-servers context))]
             (core/shutdown server)))
         context)
 

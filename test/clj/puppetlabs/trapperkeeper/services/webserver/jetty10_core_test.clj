@@ -1,4 +1,4 @@
-(ns puppetlabs.trapperkeeper.services.webserver.jetty9-core-test
+(ns puppetlabs.trapperkeeper.services.webserver.jetty10-core-test
   (:import
    (org.eclipse.jetty.server.handler ContextHandlerCollection)
    (java.security KeyStore)
@@ -11,14 +11,14 @@
             [ring.util.response :as rr]
             [puppetlabs.http.client.sync :as http-sync]
             [puppetlabs.kitchensink.core :as ks]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-core :as jetty]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-core :as jetty]
             [puppetlabs.trapperkeeper.testutils.webserver
              :refer [with-test-webserver with-test-webserver-and-config]]
             [puppetlabs.trapperkeeper.app :as tk-app]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-default-config-test
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-default-config-test
              :refer [get-server-thread-pool-queue]]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-service
-             :refer [jetty9-service add-ring-handler]]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-service
+             :refer [jetty10-service add-ring-handler]]
             [puppetlabs.trapperkeeper.testutils.logging :refer [with-test-logging]]
             [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]
             [schema.test :as schema-test]
@@ -156,7 +156,7 @@
                                 :host "localhost"
                                 :jmx-enable "false"}}]
         (with-app-with-config app
-          [jetty9-service]
+          [jetty10-service]
           config)))))
 
 (deftest override-webserver-settings!-tests
@@ -482,7 +482,7 @@
                               :idle-timeout-milliseconds 500}}]
       (with-test-logging
         (with-app-with-config app
-          [jetty9-service]
+          [jetty10-service]
           config
           (let [s (tk-app/get-service app :WebserverService)
                 add-ring-handler (partial add-ring-handler s)]

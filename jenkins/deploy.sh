@@ -11,6 +11,6 @@ echo "Tests passed!"
 lein release
 echo "Release plugin successful, pushing changes to git"
 
-git push origin --tags HEAD:$TK_JETTY9_BRANCH
+git push origin --tags HEAD:$TK_JETTY10_BRANCH
 
 echo "git push successful."

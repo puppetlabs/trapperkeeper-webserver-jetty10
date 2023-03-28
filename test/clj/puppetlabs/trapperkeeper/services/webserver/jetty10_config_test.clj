@@ -1,4 +1,4 @@
-(ns puppetlabs.trapperkeeper.services.webserver.jetty9-config-test
+(ns puppetlabs.trapperkeeper.services.webserver.jetty10-config-test
   (:import (clojure.lang ExceptionInfo)
            (java.util Arrays)
            (com.puppetlabs.ssl_utils SSLUtils))
@@ -7,11 +7,11 @@
             [me.raynes.fs :as fs]
             [puppetlabs.ssl-utils.core :as ssl]
             [puppetlabs.kitchensink.core :as ks]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-config :refer :all]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-config :refer :all]
             [puppetlabs.trapperkeeper.testutils.logging :refer [with-test-logging]]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-core :as jetty9]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-service
-             :refer [jetty9-service add-ring-handler]]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-core :as jetty10]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-service
+             :refer [jetty10-service add-ring-handler]]
             [puppetlabs.trapperkeeper.app :as tk-app]
             [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]
             [puppetlabs.trapperkeeper.testutils.webserver.common :refer [http-get]]
@@ -437,7 +437,7 @@
                                             "c.setPort(10000);")}}]
       (with-test-logging
         (with-app-with-config app
-          [jetty9-service]
+          [jetty10-service]
           config
           (let [s (tk-app/get-service app :WebserverService)
                 add-ring-handler (partial add-ring-handler s)
@@ -462,25 +462,25 @@
         (is (thrown-with-msg?
               IllegalArgumentException
               #"Invalid script string in webserver 'post-config-script' configuration"
-              (let [context (jetty9/initialize-context)]
+              (let [context (jetty10/initialize-context)]
                 (with-test-logging
                  (try
-                   (jetty9/start-webserver!
+                   (jetty10/start-webserver!
                     context
                     (merge base-config
                            {:post-config-script (str "AHAHHHGHAHAHAHEASD!  OMG!")}))
                    (finally
-                     (jetty9/shutdown context))))))))
+                     (jetty10/shutdown context))))))))
       (testing "Throws an error if the script can't be executed."
         (is (thrown-with-msg?
               IllegalArgumentException
               #"Invalid script string in webserver 'post-config-script' configuration"
-              (let [context (jetty9/initialize-context)]
+              (let [context (jetty10/initialize-context)]
                 (with-test-logging
                  (try
-                   (jetty9/start-webserver!
+                   (jetty10/start-webserver!
                     context
                     (merge base-config
                            {:post-config-script (str "Object x = null; x.toString();")}))
                    (finally
-                     (jetty9/shutdown context)))))))))))
+                     (jetty10/shutdown context)))))))))))

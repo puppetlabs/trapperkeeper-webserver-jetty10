@@ -1,4 +1,4 @@
-(ns puppetlabs.trapperkeeper.services.webserver.jetty9-service-test
+(ns puppetlabs.trapperkeeper.services.webserver.jetty10-service-test
   (:import (org.apache.http ConnectionClosedException)
            (java.io IOException)
            (java.security.cert CRLException)
@@ -17,7 +17,7 @@
             [puppetlabs.trapperkeeper.app :as tk-app]
             [puppetlabs.trapperkeeper.core :as tk-core]
             [puppetlabs.trapperkeeper.services :as tk-services]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-service
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-service
              :refer :all]
             [puppetlabs.trapperkeeper.services.watcher.filesystem-watch-service
              :as filesystem-watch-service]
@@ -29,7 +29,7 @@
              :as tk-bootstrap]
             [puppetlabs.trapperkeeper.logging :as tk-log]
             [puppetlabs.trapperkeeper.testutils.logging :as tk-log-testutils]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-core :as core]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-core :as core]
             [schema.core :as schema]
             [schema.test :as schema-test]
             [puppetlabs.kitchensink.core :as ks]
@@ -122,7 +122,7 @@
    (validate-ring-handler base-url config http-get-options :default))
   ([base-url config http-get-options server-id]
    (with-app-with-config app
-     [jetty9-service
+     [jetty10-service
       hello-webservice]
      config
      (let [response (http-get
@@ -136,7 +136,7 @@
    (validate-ring-handler-default base-url config {:as :text}))
   ([base-url config http-get-options]
    (with-app-with-config app
-     [jetty9-service
+     [jetty10-service
       hello-webservice]
      config
      (let [response (http-get
@@ -168,7 +168,7 @@
   (testing "no jetty mbeancontainers are registered prior to starting servers"
     (is (empty? (testutils/get-jetty-mbean-object-names))))
   (with-app-with-config app
-    [jetty9-service]
+    [jetty10-service]
     jetty-plaintext-config
     (testing "one jetty mbean container is registered per server"
       (is (= 1 (count (testutils/get-jetty-mbean-object-names))))))
@@ -181,7 +181,7 @@
 
   (testing "ring requests on multiple servers succeed"
     (with-app-with-config app
-      [jetty9-service]
+      [jetty10-service]
       jetty-multiserver-plaintext-config
       (let [s                (tk-app/get-service app :WebserverService)
             add-ring-handler (partial add-ring-handler s)]
@@ -212,7 +212,7 @@
           IllegalArgumentException
           #"Either host, port, ssl-host, or ssl-port must be specified"
           (tk-log-testutils/with-test-logging
-            (with-app-with-empty-config app [jetty9-service])))
+            (with-app-with-empty-config app [jetty10-service])))
       "Did not encounter expected exception when no port specified in config")))
 
 (deftest ssl-success-test
@@ -379,7 +379,7 @@
            CRLException
            (with-app-with-config
             app
-            [jetty9-service]
+            [jetty10-service]
             (assoc-in
              jetty-ssl-client-need-config
              [:webserver :ssl-crl-path]
@@ -393,7 +393,7 @@
             #"Non-readable path specified for ssl-crl-path option"
             (with-app-with-config
               app
-              [jetty9-service]
+              [jetty10-service]
               (assoc-in
                 jetty-ssl-client-need-config
                 [:webserver :ssl-crl-path]
@@ -409,7 +409,7 @@
              tmp-file)
     (with-app-with-config
      app
-     [jetty9-service
+     [jetty10-service
       hello-webservice
       filesystem-watch-service/filesystem-watch-service]
 
@@ -451,13 +451,13 @@
 (defn boot-service-and-jetty-with-default-config
   [service]
   (tk-core/boot-services-with-config
-    [service jetty9-service]
+    [service jetty10-service]
     jetty-plaintext-config))
 
 (defn boot-service-and-jetty-with-multiserver-config
   [service]
   (tk-core/boot-services-with-config
-    [service jetty9-service]
+    [service jetty10-service]
     jetty-multiserver-plaintext-config))
 
 (defn get-jetty-server-from-app-context
@@ -466,7 +466,7 @@
   ([app server-id]
    (-> (tk-app/get-service app :WebserverService)
        (tk-services/service-context)
-       (:jetty9-servers)
+       (:jetty10-servers)
        (server-id)
        (:server))))
 
@@ -566,11 +566,11 @@
                 "placing second jetty server instance on app context")
     (tk-log-testutils/with-test-logging
       (let [first-app (tk-core/boot-services-with-config
-                        [jetty9-service]
+                        [jetty10-service]
                         jetty-plaintext-config)]
         (try
           (let [second-app          (tk-core/boot-services-with-config
-                                      [jetty9-service]
+                                      [jetty10-service]
                                       jetty-plaintext-config)
                 second-jetty-server (get-jetty-server-from-app-context
                                       second-app)]
@@ -590,11 +590,11 @@
   (testing (str "specifying a config in the old format will start a server with "
                 "a server-id of :default")
     (let [app          (tk-core/boot-services-with-config
-                         [jetty9-service]
+                         [jetty10-service]
                          jetty-plaintext-config)
           context-list (-> (tk-app/get-service app :WebserverService)
                            (tk-services/service-context)
-                           (:jetty9-servers))
+                           (:jetty10-servers))
           jetty-server (get-jetty-server-from-app-context app)]
       (is (contains? context-list :default)
           "the default key was not added to the context list")
@@ -609,7 +609,7 @@
   (testing (str "request to Jetty fails with a 431 error if the request header "
                 "is too large and a larger one is not set")
     (with-app-with-config app
-      [jetty9-service
+      [jetty10-service
        hello-webservice]
       jetty-plaintext-config
       (tk-log-testutils/with-test-logging
@@ -620,7 +620,7 @@
   (testing (str "request to Jetty succeeds with a large cookie if the request header "
                 "size is properly set")
     (with-app-with-config app
-      [jetty9-service]
+      [jetty10-service]
       jetty-plaintext-large-request-config
       (let [s                   (tk-app/get-service app :WebserverService)
             add-ring-handler    (partial add-ring-handler s)
@@ -636,7 +636,7 @@
 (deftest default-server-test
   (testing "handler added to user-specified default server if no server-id is given"
     (with-app-with-config app
-      [jetty9-service
+      [jetty10-service
        hello-webservice]
       default-server-config
       (let [response (http-get "http://localhost:9000/hi_world")]
@@ -646,7 +646,7 @@
   (testing (str "exception thrown if user does not specify a "
                 "default server and no server-id is given")
     (with-app-with-config app
-      [jetty9-service]
+      [jetty10-service]
       no-default-config
       (let [s                (tk-app/get-service app :WebserverService)
             add-ring-handler (partial add-ring-handler s)]
@@ -658,7 +658,7 @@
     (testing "static content can be specified in a single-server configuration"
       (with-app-with-config
         app
-        [jetty9-service]
+        [jetty10-service]
         static-content-single-config
         (let [response (http-get "http://localhost:8080/resources/logback.xml")
               response2 (http-get "http://localhost:8080/resources2/logback.xml")]
@@ -670,7 +670,7 @@
     (testing "static content can be specified in a multi-server configuration"
       (with-app-with-config
         app
-        [jetty9-service]
+        [jetty10-service]
         static-content-multi-config
         (let [response (http-get "http://localhost:8080/resources/logback.xml")
               response2 (http-get "http://localhost:8080/resources2/logback.xml")]
@@ -695,7 +695,7 @@
       (testing "static content can be served with symlinks when option specified in config"
         (with-app-with-config
           app
-          [jetty9-service]
+          [jetty10-service]
           static-content-single-config
           (let [response (http-get "http://localhost:8080/resources/logback.xml")
                 response2 (http-get "http://localhost:8080/resources/logback-link.xml")]
@@ -707,7 +707,7 @@
       (testing "static content cannot be served with symlinks if option not set"
         (with-app-with-config
           app
-          [jetty9-service]
+          [jetty10-service]
           static-content-single-config
           (let [response (http-get "http://localhost:8080/resources2/logback.xml")
                 response2 (http-get "http://localhost:8080/resources2/logback-link.xml")]
@@ -721,7 +721,7 @@
 (deftest request-logging-test
   (with-app-with-config
    app
-   [jetty9-service hello-webservice]
+   [jetty10-service hello-webservice]
    {:webserver {:port 8080
                 ;; Restrict the number of threads available to the webserver
                 ;; so we can easily test whether thread-local values in the
@@ -755,10 +755,10 @@
         (is (every? #(not= "foo" %) (map :body responses)))))))
 
 (deftest graceful-shutdown-test
-  (testing "jetty9 webservers shut down gracefully by default"
+  (testing "jetty10 webservers shut down gracefully by default"
     (with-app-with-config
       app
-      [jetty9-service]
+      [jetty10-service]
       jetty-plaintext-config
       (let [s (tk-app/get-service app :WebserverService)
             add-ring-handler   (partial add-ring-handler s)
@@ -775,10 +775,10 @@
             (is (= (:status @response) 200))
             (is (= (:body @response) "Hello, World!")))))))
 
-  (testing "jetty9's stop timeout can be changed from config"
+  (testing "jetty10's stop timeout can be changed from config"
     (with-app-with-config
       app
-      [jetty9-service]
+      [jetty10-service]
       {:webserver {:port 8080 :shutdown-timeout-seconds 1}}
       (let [s (tk-app/get-service app :WebserverService)
             add-ring-handler   (partial add-ring-handler s)
@@ -817,7 +817,7 @@
 ;        (tk-log-testutils/with-test-logging
 ;         (with-app-with-config
 ;          app
-;          [jetty9-service]
+;          [jetty10-service]
 ;          {:webserver {:port 8080 :shutdown-timeout-seconds 0}}
 ;          (let [s (tk-app/get-service app :WebserverService)
 ;                add-ring-handler (partial add-ring-handler s)
@@ -871,7 +871,7 @@
       (tk-log-testutils/with-test-logging
        (with-app-with-config
          app
-         [jetty9-service
+         [jetty10-service
           sleepy-service]
          {:webserver {:port 8080 :shutdown-timeout-seconds 1}}
          (with-open [async-client (async/create-client {})]
@@ -888,7 +888,7 @@
   (testing "if the stop lifecycle is called more than once, we handle that gracefully and quietly"
     (tk-log-testutils/with-logged-event-maps log-events
       (let [app (tk-bootstrap/bootstrap-services-with-config
-                 [jetty9-service]
+                 [jetty10-service]
                  {:webserver {:port 8080}})]
         (tk-app/stop app)
         (tk-app/stop app))
@@ -908,7 +908,7 @@
                            jetty-ssl-pem-config)]
               (with-app-with-config
                 app
-                [jetty9-service]
+                [jetty10-service]
                 config)))]
     (testing "warns if SSLv3 is in the protocol list"
       (tk-log-testutils/with-test-logging
@@ -933,7 +933,7 @@
   (testing "SSLv3 is not supported by default"
     (with-app-with-config
       app
-      [jetty9-service
+      [jetty10-service
        hello-webservice]
       jetty-ssl-pem-config
       (let [test-fn (fn [] (http-get "https://localhost:8081/hi_world" (merge default-options-for-https-client
@@ -944,7 +944,7 @@
     (tk-log-testutils/with-test-logging
      (with-app-with-config
       app
-      [jetty9-service
+      [jetty10-service
        hello-webservice]
       (-> jetty-ssl-pem-config
         (assoc-in [:webserver :ssl-protocols] ["SSLv3"])

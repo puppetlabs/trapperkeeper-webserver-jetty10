@@ -1,4 +1,4 @@
-(ns puppetlabs.trapperkeeper.services.webserver.jetty9-config
+(ns puppetlabs.trapperkeeper.services.webserver.jetty10-config
   (:import (java.security KeyStore)
            (java.io FileInputStream)
            (java.util HashMap)
@@ -9,7 +9,7 @@
            (org.codehaus.janino ScriptEvaluator)
            (org.codehaus.commons.compiler CompileException)
            (java.lang.reflect InvocationTargetException)
-           (com.puppetlabs.trapperkeeper.services.webserver.jetty9.utils
+           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils
             LifeCycleImplementingRequestLogImpl
             MDCAccessLogConverter MDCRequestLogHandler)
            (com.puppetlabs.ssl_utils SSLUtils))
@@ -28,7 +28,7 @@
 ;;; NOTE: We are making a decisive move away from overriding Jetty's
 ;;; implicit default values for settings when downstream TK apps do not
 ;;; explicitly provide values for them.  Please see the comments/tests in
-;;; `jetty9_default_config_test.clj` for full details.
+;;; `jetty10_default_config_test.clj` for full details.
 ;;;
 ;;; Below we are making a handful of deliberate exceptions to this rule,
 ;;; but please do not perpetuate this pattern without a compelling reason to

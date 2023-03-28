@@ -22,7 +22,7 @@
   (join [this] [this server-id]))
 
 (defservice webrouting-service
-  "Provides the ability to route handlers to different jetty9 webserver services"
+  "Provides the ability to route handlers to different jetty10 webserver services"
   WebroutingService
   [WebserverService
    [:ConfigService get-in-config]]

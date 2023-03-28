@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [puppetlabs.trapperkeeper.services :as tk-services]
             [puppetlabs.trapperkeeper.services.webrouting.webrouting-service :refer :all]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-service :refer [jetty9-service]]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-service :refer [jetty10-service]]
             [puppetlabs.trapperkeeper.app :refer [get-service]]
             [puppetlabs.trapperkeeper.testutils.webrouting.common :refer :all]
             [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]
@@ -62,7 +62,7 @@
         (with-test-logging
           (with-app-with-config
             app
-            [jetty9-service webrouting-service service1 test-dummy]
+            [jetty10-service webrouting-service service1 test-dummy]
             webrouting-plaintext-override-config
             (let [s                (get-service app :WebroutingService)
                   add-ring-handler (partial add-ring-handler s)

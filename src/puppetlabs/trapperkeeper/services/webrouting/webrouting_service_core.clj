@@ -1,6 +1,6 @@
 (ns puppetlabs.trapperkeeper.services.webrouting.webrouting-service-core
   (:require [schema.core :as schema]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-core :as jetty9-core]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-core :as jetty10-core]
             [puppetlabs.trapperkeeper.services :as tk-services]
             [puppetlabs.i18n.core :as i18n]))
 
@@ -21,16 +21,16 @@
   {(schema/optional-key :route-id) schema/Keyword})
 
 (def CommonOptions
-  (dissoc (merge jetty9-core/CommonOptions RouteOption) :server-id))
+  (dissoc (merge jetty10-core/CommonOptions RouteOption) :server-id))
 
 (def ContextHandlerOptions
-  (dissoc (merge jetty9-core/ContextHandlerOptions RouteOption) :server-id))
+  (dissoc (merge jetty10-core/ContextHandlerOptions RouteOption) :server-id))
 
 (def ServletHandlerOptions
-  (dissoc (merge jetty9-core/ServletHandlerOptions RouteOption) :server-id))
+  (dissoc (merge jetty10-core/ServletHandlerOptions RouteOption) :server-id))
 
 (def ProxyRouteOptions
-  (dissoc (merge jetty9-core/ProxyOptions RouteOption) :server-id))
+  (dissoc (merge jetty10-core/ProxyOptions RouteOption) :server-id))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Private Utility Functions

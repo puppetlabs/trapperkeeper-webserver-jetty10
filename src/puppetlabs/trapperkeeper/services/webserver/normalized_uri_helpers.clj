@@ -3,7 +3,7 @@
            (org.eclipse.jetty.util URIUtil)
            (org.eclipse.jetty.server Request)
            (org.eclipse.jetty.server.handler HandlerWrapper AbstractHandler)
-           (com.puppetlabs.trapperkeeper.services.webserver.jetty9.utils
+           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils
             HttpServletRequestWithAlternateRequestUri)
            (javax.servlet Filter DispatcherType)
            (java.util EnumSet)
