@@ -1,4 +1,4 @@
-(ns puppetlabs.trapperkeeper.services.webserver.jetty9-default-config-test
+(ns puppetlabs.trapperkeeper.services.webserver.jetty10-default-config-test
   "
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; VALIDATION OF DEFAULT JETTY CONFIGURATION VALUES
@@ -41,10 +41,10 @@ react accordingly."
             [schema.test :as schema-test]
             [puppetlabs.kitchensink.core :as ks]
             [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-service :refer [jetty9-service]]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-service :refer [jetty10-service]]
             [puppetlabs.trapperkeeper.app :refer [get-service]]
             [puppetlabs.trapperkeeper.services :refer [service-context]]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-core :as core]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-core :as core]
             [puppetlabs.trapperkeeper.testutils.webserver :as testutils]
             [puppetlabs.trapperkeeper.testutils.logging :refer [with-test-logging]])
   (:import (org.eclipse.jetty.server HttpConfiguration ServerConnector Server)
@@ -63,10 +63,10 @@ react accordingly."
 (deftest default-proxy-http-client-settings-test
   (with-test-logging
     (with-app-with-config app
-      [jetty9-service]
+      [jetty10-service]
       {:webserver {:host "localhost" :port 8080}}
       (let [s (get-service app :WebserverService)
-            server-context (get-in (service-context s) [:jetty9-servers :default])
+            server-context (get-in (service-context s) [:jetty10-servers :default])
             proxy-servlet (core/proxy-servlet
                             server-context
                             {:host "localhost"

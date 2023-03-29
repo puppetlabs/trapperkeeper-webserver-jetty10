@@ -12,7 +12,7 @@ And now, a few quick housekeeping items before we get to the code...
 ## Launching trapperkeeper and running the app
 
 To start up _trapperkeeper_ and launch the sample application, use the following _lein_ command while in the
-_trapperkeeper-webserver-jetty9_ home directory:
+_trapperkeeper-webserver-jetty10_ home directory:
 
 ```sh
 lein trampoline run --config examples/ring_app/ring-example.conf \
@@ -30,13 +30,13 @@ The bootstrap config file contains a list of services that _trapperkeeper_ will 
 listed as fully-qualified Clojure namespaces and service names. For this example the bootstrap.cfg looks like this:
 
 ```
-puppetlabs.trapperkeeper.services.webserver.jetty9-service/jetty9-service
+puppetlabs.trapperkeeper.services.webserver.jetty10-service/jetty10-service
 examples.ring-app.example-services/count-service
 examples.ring-app.example-services/bert-service
 examples.ring-app.example-services/ernie-service
 ```
 
-This configuration indicates the jetty9 `WebserverService` is to be loaded, as
+This configuration indicates the jetty10 `WebserverService` is to be loaded, as
 well as the three new services defined in the `example_services.clj` file.
 
 ### The `ring-example.conf` configuration file

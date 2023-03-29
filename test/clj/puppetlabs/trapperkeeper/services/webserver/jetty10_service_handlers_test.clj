@@ -1,4 +1,4 @@
-(ns puppetlabs.trapperkeeper.services.webserver.jetty9-service-handlers-test
+(ns puppetlabs.trapperkeeper.services.webserver.jetty10-service-handlers-test
   (:import (servlet SimpleServlet)
            (javax.servlet ServletContextListener)
            (java.nio.file Paths Files)
@@ -7,7 +7,7 @@
   (:require [clojure.test :refer :all]
             [gniazdo.core :as ws-client]
             [puppetlabs.experimental.websockets.client :as ws-session]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-service :refer :all]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-service :refer :all]
             [puppetlabs.trapperkeeper.testutils.webserver.common :refer :all]
             [puppetlabs.trapperkeeper.app :refer [get-service]]
             [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]
@@ -25,7 +25,7 @@
   (with-test-logging
     (testing "static content context"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s                   (get-service app :WebserverService)
               add-context-handler (partial add-context-handler s)
@@ -38,7 +38,7 @@
 
     (testing "static content context with add-context-handler-to"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-multiserver-plaintext-config
         (let [s                      (get-service app :WebserverService)
               add-context-handler (partial add-context-handler s)
@@ -51,7 +51,7 @@
 
     (testing "customization of static content context"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s                   (get-service app :WebserverService)
               add-context-handler (partial add-context-handler s)
@@ -81,7 +81,7 @@
 
         (testing "symlinks served when :follow-links is true"
           (with-app-with-config app
-            [jetty9-service]
+            [jetty10-service]
             jetty-plaintext-config
             (let [s (get-service app :WebserverService)
                   add-context-handler (partial add-context-handler s)
@@ -96,7 +96,7 @@
 
         (testing "symlinks not served when :follow-links is false"
           (with-app-with-config app
-            [jetty9-service]
+            [jetty10-service]
             jetty-plaintext-config
             (let [s (get-service app :WebserverService)
                   add-context-handler (partial add-context-handler s)
@@ -115,7 +115,7 @@
   (with-test-logging
     (testing "request to servlet over http succeeds"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s                   (get-service app :WebserverService)
               add-servlet-handler (partial add-servlet-handler s)
@@ -130,7 +130,7 @@
 
     (testing "request to servlet over http succeeds with add-servlet-handler-to"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-multiserver-plaintext-config
         (let [s                      (get-service app :WebserverService)
               add-servlet-handler    (partial add-servlet-handler s)
@@ -145,7 +145,7 @@
 
     (testing "request to servlet initialized with empty param succeeds"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s                   (get-service app :WebserverService)
               add-servlet-handler (partial add-servlet-handler s)
@@ -159,7 +159,7 @@
 
     (testing "request to servlet initialized with non-empty params succeeds"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s                   (get-service app :WebserverService)
               add-servlet-handler (partial add-servlet-handler s)
@@ -185,7 +185,7 @@
   (with-test-logging
     (testing "Websocket handlers"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s                     (get-service app :WebserverService)
               add-websocket-handler (partial add-websocket-handler s)
@@ -246,7 +246,7 @@
                                      "You look dandy"]))))))
     (testing "can close without supplying a reason"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s                     (get-service app :WebserverService)
               add-websocket-handler (partial add-websocket-handler s)
@@ -260,7 +260,7 @@
             (is (= 1000 @closed))))))
     (testing "can close with reason"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s                     (get-service app :WebserverService)
               add-websocket-handler (partial add-websocket-handler s)
@@ -276,7 +276,7 @@
   (with-test-logging
     (testing "WAR support"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s               (get-service app :WebserverService)
               add-war-handler (partial add-war-handler s)
@@ -290,7 +290,7 @@
 
     (testing "WAR support with add-war-handler-to"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-multiserver-plaintext-config
         (let [s                  (get-service app :WebserverService)
               add-war-handler    (partial add-war-handler s)
@@ -306,7 +306,7 @@
   (testing "Retrieve all endpoints"
     (with-test-logging
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s                        (get-service app :WebserverService)
               path-context             "/ernie"
@@ -368,7 +368,7 @@
   (testing "Log endpoints"
     (with-test-logging
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-multiserver-plaintext-config
         (let [s                        (get-service app :WebserverService)
               log-registered-endpoints (partial log-registered-endpoints s)
@@ -384,7 +384,7 @@
   (with-test-logging
     (testing "redirects when no trailing slash is present are disabled by default"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s                (get-service app :WebserverService)
               add-ring-handler (partial add-ring-handler s)
@@ -399,7 +399,7 @@
 
     (testing "redirects when no trailing slash is present and option is enabled"
       (with-app-with-config app
-        [jetty9-service]
+        [jetty10-service]
         jetty-plaintext-config
         (let [s                (get-service app :WebserverService)
               add-ring-handler (partial add-ring-handler s)
@@ -421,7 +421,7 @@
     (testing "when uri request normalization enabled for ring handler"
       (with-app-with-config
        app
-       [jetty9-service]
+       [jetty10-service]
        jetty-plaintext-config
        (let [webserver-service (get-service app :WebserverService)]
          (add-ring-handler webserver-service
@@ -450,7 +450,7 @@
     (testing "when uri request normalization disabled for ring handler"
       (with-app-with-config
        app
-       [jetty9-service]
+       [jetty10-service]
        jetty-plaintext-config
        (let [webserver-service (get-service app :WebserverService)]
          (add-ring-handler webserver-service
@@ -490,7 +490,7 @@
     (testing "when uri request normalization enabled for servlet"
       (with-app-with-config
        app
-       [jetty9-service]
+       [jetty10-service]
        jetty-plaintext-config
        (let [webserver-service (get-service app :WebserverService)]
          (add-servlet-handler
@@ -520,7 +520,7 @@
     (testing "when uri request normalization disabled for servlet"
       (with-app-with-config
        app
-       [jetty9-service]
+       [jetty10-service]
        jetty-plaintext-config
        (let [webserver-service (get-service app :WebserverService)]
          (add-servlet-handler

@@ -326,7 +326,7 @@ Then the static content in the `web-assets` directory would be mounted at the UR
 `"/assets"` on your server during initialization, and you could access the contents of
 `image.jpg` by visiting `"http://localhost:8080/assets/image.jpg"`.
 
-By default, symbolic links will not be served by the Jetty9 Webservice. However, if you have
+By default, symbolic links will not be served by the Jetty10 Webservice. However, if you have
 a symbolic link that you want to serve as static content, you can add an extra option,
 `follow-links`, to the specification for a piece of static content. The value of this should
 be a boolean, and if set to true, symbolic links will be served.
@@ -415,7 +415,7 @@ For more info on the Jetty `Server` object model, see the
 
 ## Configuring multiple webservers on isolated ports
 
-It is possible to configure multiple webservers on isolated ports within a single Jetty9
+It is possible to configure multiple webservers on isolated ports within a single Jetty10
 webservice. In order to configure multiple webservers, change the `webserver` section of your
 Trapperkeeper configuration files to be a nested map. Each key in this map is the id of a server, and
 its value is the configuration for that server.
@@ -437,8 +437,8 @@ webserver: {
 }
 ```
 
-This configuration would cause the Jetty9 service to create two different Jetty servers on isolated
-ports. You can then specify which server you would like to add handlers to when calling the Jetty9
+This configuration would cause the Jetty10 service to create two different Jetty servers on isolated
+ports. You can then specify which server you would like to add handlers to when calling the Jetty10
 service functions, and they will be added to the server you specify.
 
 Please note that, with the above configuration, you MUST specify a server-id when calling a service
@@ -486,7 +486,7 @@ webserver: {
 }
 ```
 
-In this case, the Jetty9 Service will simply create a single webserver and give it id `:default`,
+In this case, the Jetty10 Service will simply create a single webserver and give it id `:default`,
 and will automatically make this server the default server.
 
 ### `jmx-enable`

@@ -1,7 +1,7 @@
 (ns puppetlabs.trapperkeeper.services.webrouting.webrouting-service-proxy-test
   (:require [clojure.test :refer :all]
             [puppetlabs.trapperkeeper.services.webrouting.webrouting-service :refer :all]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-service :refer [jetty9-service]]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-service :refer [jetty10-service]]
             [puppetlabs.trapperkeeper.testutils.webrouting.common :refer :all]
             [puppetlabs.trapperkeeper.app :refer [get-service]]
             [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]
@@ -36,7 +36,7 @@
   [{:keys [target proxy proxy-config proxy-opts]} & body]
   `(with-test-logging
      (with-app-with-config proxy-target-app#
-       [jetty9-service
+       [jetty10-service
         webrouting-service
         dummy-service1]
        {:webserver ~target
@@ -52,7 +52,7 @@
                                        ((:headers req#) "x-fancy-proxy-header"))}
                {:status 404 :body "D'oh"}))))
        (with-app-with-config proxy-app#
-         [jetty9-service
+         [jetty10-service
           webrouting-service
           dummy-service2]
          {:webserver ~proxy

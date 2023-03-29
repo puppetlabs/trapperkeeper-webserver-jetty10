@@ -1,6 +1,6 @@
 (ns examples.ring-app.repl
-  (:require [puppetlabs.trapperkeeper.services.webserver.jetty9-service
-              :refer [jetty9-service]]
+  (:require [puppetlabs.trapperkeeper.services.webserver.jetty10-service
+              :refer [jetty10-service]]
             [examples.ring-app.example-services
               :refer [count-service bert-service ernie-service]]
             [puppetlabs.trapperkeeper.core :as tk]
@@ -28,7 +28,7 @@
 (defn init []
   (alter-var-root #'system
                   (fn [_] (tk/build-app
-                            [jetty9-service
+                            [jetty10-service
                              count-service
                              bert-service
                              ernie-service]

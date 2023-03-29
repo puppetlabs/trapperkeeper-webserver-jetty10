@@ -1,5 +1,5 @@
 (ns puppetlabs.trapperkeeper.testutils.webserver
-  (:require [puppetlabs.trapperkeeper.services.webserver.jetty9-core :as jetty9]
+  (:require [puppetlabs.trapperkeeper.services.webserver.jetty10-core :as jetty10]
             [clojure.test :refer [is]]
             [clojure.java.jmx :as jmx])
   (:import (javax.management ObjectName)
@@ -24,10 +24,10 @@
           ;; Hit the embedded webserver
           (http-client/get (format \"http://localhost:%s\" port))))"
   [app port-var config & body]
-  `(let [srv#      (jetty9/start-webserver!
-                     (jetty9/initialize-context)
+  `(let [srv#      (jetty10/start-webserver!
+                     (jetty10/initialize-context)
                      (assoc ~config :port 0))
-         _#        (jetty9/add-ring-handler srv# ~app "/" true false)
+         _#        (jetty10/add-ring-handler srv# ~app "/" true false)
          ~port-var (-> (:server srv#)
                        (.getConnectors)
                        (first)
@@ -35,7 +35,7 @@
      (try
        ~@body
        (finally
-         (jetty9/shutdown srv#)))))
+         (jetty10/shutdown srv#)))))
 
 (defmacro with-test-webserver
   "Constructs and starts an embedded Jetty on a random port, and

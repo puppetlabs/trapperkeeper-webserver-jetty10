@@ -1,8 +1,8 @@
-(ns puppetlabs.trapperkeeper.services.webserver.jetty9-service-override-settings-test
+(ns puppetlabs.trapperkeeper.services.webserver.jetty10-service-override-settings-test
   (:require [clojure.test :refer :all]
             [puppetlabs.trapperkeeper.app :refer [get-service]]
             [puppetlabs.trapperkeeper.services :as tk-services]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-service
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-service
              :refer :all]
             [puppetlabs.trapperkeeper.testutils.webserver.common :refer :all]
             [puppetlabs.trapperkeeper.testutils.bootstrap
@@ -60,7 +60,7 @@
         (with-test-logging
           (with-app-with-config
             app
-            [jetty9-service service1]
+            [jetty10-service service1]
             jetty-plaintext-multiserver-override-config
             (let [s                (get-service app :WebserverService)
                   add-ring-handler (partial add-ring-handler s)
@@ -105,7 +105,7 @@
         (with-test-logging
           (with-app-with-config
             app
-            [jetty9-service service1]
+            [jetty10-service service1]
             jetty-multiserver-plaintext-config
             (let [s                   (get-service app :WebserverService)
                   add-ring-handler    (partial add-ring-handler s)
@@ -156,7 +156,7 @@
         (with-test-logging
           (with-app-with-config
             app
-            [jetty9-service service1]
+            [jetty10-service service1]
             jetty-ssl-no-certs-config
             (let [s                (get-service app :WebserverService)
                   add-ring-handler (partial add-ring-handler s)
@@ -180,7 +180,7 @@
         (with-test-logging
           (with-app-with-config
             app
-            [jetty9-service service1]
+            [jetty10-service service1]
             jetty-plaintext-config
             (let [s                            (get-service app :WebserverService)
                   override-webserver-settings! (partial
@@ -209,7 +209,7 @@
         (with-test-logging
           (with-app-with-config
             app
-            [jetty9-service service1]
+            [jetty10-service service1]
             jetty-plaintext-config
             (let [s                (get-service app :WebserverService)
                   add-ring-handler (partial add-ring-handler s)

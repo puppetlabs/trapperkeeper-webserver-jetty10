@@ -5,10 +5,10 @@
 #
 
 # The name of the package into which the translations bundle will be placed
-BUNDLE=puppetlabs.trapperkeeper_webserver_jetty9
+BUNDLE=puppetlabs.trapperkeeper_webserver_jetty10
 
 # The name of the POT file into which the gettext code strings (msgid) will be placed
-POT_NAME=trapperkeeper-webserver-jetty9.pot
+POT_NAME=trapperkeeper-webserver-jetty10.pot
 
 # The list of names of packages covered by the translation bundle;
 # by default it contains a single package - the same where the translations

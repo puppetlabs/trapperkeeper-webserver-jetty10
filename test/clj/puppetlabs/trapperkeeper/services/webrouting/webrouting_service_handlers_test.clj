@@ -4,7 +4,7 @@
             [schema.test :as schema-test]
             [puppetlabs.trapperkeeper.services :as tk-services]
             [puppetlabs.trapperkeeper.services.webrouting.webrouting-service :refer :all]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-service :refer [jetty9-service]]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-service :refer [jetty10-service]]
             [puppetlabs.trapperkeeper.app :refer [get-service]]
             [puppetlabs.trapperkeeper.testutils.webrouting.common :refer :all]
             [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]
@@ -46,7 +46,7 @@
   (with-test-logging
     (testing "static content context with web routing"
       (with-app-with-config app
-        [jetty9-service
+        [jetty10-service
          webrouting-service
          test-dummy]
         webrouting-plaintext-config
@@ -61,7 +61,7 @@
 
     (testing "static content context with multiple routes"
       (with-app-with-config app
-        [jetty9-service
+        [jetty10-service
          webrouting-service
          test-dummy]
         webrouting-plaintext-multiroute-config
@@ -82,7 +82,7 @@
   (with-test-logging
     (testing "ring request over http succeeds with web-routing"
       (with-app-with-config app
-        [jetty9-service
+        [jetty10-service
          webrouting-service
          test-dummy]
         webrouting-plaintext-config
@@ -98,7 +98,7 @@
 
     (testing "ring request over http succeeds with multiple web-routes"
       (with-app-with-config app
-        [jetty9-service
+        [jetty10-service
          webrouting-service
          test-dummy]
         webrouting-plaintext-multiroute-config
@@ -120,7 +120,7 @@
   (with-test-logging
     (testing "request to servlet over http succeeds with web routing"
       (with-app-with-config app
-        [jetty9-service
+        [jetty10-service
          webrouting-service
          test-dummy]
         webrouting-plaintext-config
@@ -136,7 +136,7 @@
 
     (testing "request to servlet over http succeeds with multiple web routes"
       (with-app-with-config app
-        [jetty9-service
+        [jetty10-service
          webrouting-service
          test-dummy]
         webrouting-plaintext-multiroute-config
@@ -158,7 +158,7 @@
   (with-test-logging
     (testing "WAR support with web routing"
       (with-app-with-config app
-        [jetty9-service
+        [jetty10-service
          webrouting-service
          test-dummy]
         webrouting-plaintext-config
@@ -174,7 +174,7 @@
 
     (testing "WAR support with multiple web routes"
       (with-app-with-config app
-        [jetty9-service
+        [jetty10-service
          webrouting-service
          test-dummy]
         webrouting-plaintext-multiroute-config
@@ -198,7 +198,7 @@
                 "successful with the web-routing service")
     (with-test-logging
       (with-app-with-config app
-        [jetty9-service
+        [jetty10-service
          webrouting-service
          test-dummy]
         webrouting-plaintext-config

@@ -9,8 +9,8 @@
             [puppetlabs.trapperkeeper.services :as tk-services]
             [puppetlabs.trapperkeeper.services.webrouting.webrouting-service
              :refer :all]
-            [puppetlabs.trapperkeeper.services.webserver.jetty9-service
-             :refer [jetty9-service]]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-service
+             :refer [jetty10-service]]
             [puppetlabs.trapperkeeper.testutils.webrouting.common :refer :all]
             [puppetlabs.trapperkeeper.testutils.bootstrap
              :refer [with-app-with-empty-config
@@ -110,7 +110,7 @@
     (testing "Other services can successfully use webrouting service"
       (with-app-with-config
         app
-        [jetty9-service webrouting-service test-service test-websocket-service]
+        [jetty10-service webrouting-service test-service test-websocket-service]
         webrouting-plaintext-multiserver-multiroute-config
         (let [response (http-get "http://localhost:8080/foo/")]
           (is (= (:status response) 200))
@@ -133,7 +133,7 @@
     (testing "Error occurs when specifying service that does not exist in config file"
       (with-app-with-config
         app
-        [jetty9-service webrouting-service not-real]
+        [jetty10-service webrouting-service not-real]
         webrouting-plaintext-config
         (let [s                (tk-app/get-service app :WebroutingService)
               add-ring-handler (partial add-ring-handler s)
@@ -145,7 +145,7 @@
     (testing "Error occurs when endpoints don't have servers and no default is set"
       (with-app-with-config
         app
-        [jetty9-service webrouting-service test-service-2]
+        [jetty10-service webrouting-service test-service-2]
         no-default-config
         (let [s                (tk-app/get-service app :WebroutingService)
               add-ring-handler (partial add-ring-handler s)
@@ -157,7 +157,7 @@
     (testing "Error occurs when not specifying a route-id for a multi-route config"
       (with-app-with-config
         app
-        [jetty9-service webrouting-service test-service-2]
+        [jetty10-service webrouting-service test-service-2]
         default-route-config
         (let [s                (tk-app/get-service app :WebroutingService)
               svc              (tk-app/get-service app :TestService2)
@@ -168,7 +168,7 @@
     (testing "Can access route-ids for a service"
       (with-app-with-config
         app
-        [jetty9-service webrouting-service test-service test-service-2]
+        [jetty10-service webrouting-service test-service test-service-2]
         webrouting-plaintext-multiserver-multiroute-config
         (let [s         (tk-app/get-service app :WebroutingService)
               svc       (tk-app/get-service app :TestService)
@@ -183,7 +183,7 @@
     (testing "Can access server for a service"
       (with-app-with-config
        app
-       [jetty9-service webrouting-service test-service test-service-2 test-service-3]
+       [jetty10-service webrouting-service test-service test-service-2 test-service-3]
        webrouting-plaintext-multiserver-multiroute-config
        (let [s          (tk-app/get-service app :WebroutingService)
              svc        (tk-app/get-service app :TestService)
