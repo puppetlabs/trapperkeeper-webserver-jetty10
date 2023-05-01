@@ -1,45 +1,45 @@
 (ns puppetlabs.trapperkeeper.services.webserver.jetty10-core
-  (:import (org.eclipse.jetty.server Handler Server Request ServerConnector
-                                     HttpConfiguration HttpConnectionFactory
-                                     ConnectionFactory AbstractConnectionFactory)
-           (org.eclipse.jetty.server.handler AbstractHandler ContextHandler HandlerCollection
-                                             ContextHandlerCollection AllowSymLinkAliasChecker
-                                             StatisticsHandler HandlerWrapper)
-           (org.eclipse.jetty.server.handler.gzip GzipHandler)
-           (org.eclipse.jetty.util.resource Resource)
-           (org.eclipse.jetty.util.thread QueuedThreadPool)
-           (org.eclipse.jetty.util.ssl SslContextFactory)
-           (javax.servlet.http HttpServletResponse)
-           (java.util.concurrent TimeoutException)
-           (org.eclipse.jetty.servlet ServletContextHandler ServletHolder DefaultServlet)
-           (org.eclipse.jetty.webapp WebAppContext)
-           (org.eclipse.jetty.http MimeTypes HttpHeader HttpHeaderValue HttpMethod)
-           (javax.servlet Servlet ServletContextListener)
-           (org.eclipse.jetty.proxy ProxyServlet)
-           (java.net URI)
-           (java.security Security)
-           (org.eclipse.jetty.client HttpClient RedirectProtocolHandler)
-           (clojure.lang Atom)
-           (java.lang.management ManagementFactory)
-           (org.eclipse.jetty.jmx MBeanContainer)
-           (org.eclipse.jetty.util URIUtil BlockingArrayQueue)
-           (java.io IOException)
-           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils InternalSslContextFactory)
-           (com.puppetlabs.ssl_utils SSLUtils))
-
-  (:require [ring.util.servlet :as servlet]
-            [ring.util.codec :as codec]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [puppetlabs.trapperkeeper.services.webserver.jetty10-config :as config]
-            [puppetlabs.trapperkeeper.services.webserver.experimental.jetty10-websockets :as websockets]
-            [puppetlabs.trapperkeeper.services.webserver.normalized-uri-helpers
-             :as normalized-uri-helpers]
+            [me.raynes.fs :as fs]
+            [puppetlabs.i18n.core :as i18n]
             [puppetlabs.trapperkeeper.services.protocols.filesystem-watch-service
              :as watch-protocol]
-            [schema.core :as schema]
-            [puppetlabs.i18n.core :as i18n]
-            [me.raynes.fs :as fs]))
+           ; [puppetlabs.trapperkeeper.services.webserver.experimental.jetty10-websockets :as websockets]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-config :as config]
+            [puppetlabs.trapperkeeper.services.webserver.normalized-uri-helpers
+             :as normalized-uri-helpers]
+            [ring.util.codec :as codec]
+            [ring.util.servlet :as servlet]
+            [schema.core :as schema])
+
+  (:import (clojure.lang Atom)
+           (com.puppetlabs.ssl_utils SSLUtils)
+           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils InternalSslContextFactory)
+           (java.io IOException)
+           (java.lang.management ManagementFactory)
+           (java.net URI)
+           (java.security Security)
+           (java.util.concurrent TimeoutException)
+           (javax.servlet Servlet ServletContextListener)
+           (javax.servlet.http HttpServletResponse)
+           (org.eclipse.jetty.client HttpClient RedirectProtocolHandler)
+           (org.eclipse.jetty.http HttpHeader HttpHeaderValue HttpMethod MimeTypes)
+           (org.eclipse.jetty.jmx MBeanContainer)
+           (org.eclipse.jetty.proxy ProxyServlet)
+           (org.eclipse.jetty.server AbstractConnectionFactory ConnectionFactory Handler HttpConfiguration
+                                     HttpConnectionFactory Request
+                                     Server ServerConnector SymlinkAllowedResourceAliasChecker)
+           (org.eclipse.jetty.server.handler AbstractHandler AllowSymLinkAliasChecker ContextHandler
+                                             ContextHandlerCollection HandlerCollection
+                                             HandlerWrapper StatisticsHandler)
+           (org.eclipse.jetty.server.handler.gzip GzipHandler)
+           (org.eclipse.jetty.servlet DefaultServlet ServletContextHandler ServletHolder)
+           (org.eclipse.jetty.util BlockingArrayQueue URIUtil)
+           (org.eclipse.jetty.util.resource Resource)
+           (org.eclipse.jetty.util.ssl SslContextFactory)
+           (org.eclipse.jetty.util.thread QueuedThreadPool)
+           (org.eclipse.jetty.webapp WebAppContext)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; JDK SecurityProvider Hack
@@ -431,7 +431,7 @@
 (schema/defn ^:always-validate
   add-handler :- ContextHandler
   [webserver-context :- ServerContext
-   handler :- ContextHandler
+   ^ContextHandler handler :- ContextHandler
    enable-trailing-slash-redirect? :- schema/Bool]
   (.setAllowNullPathInfo handler (not enable-trailing-slash-redirect?))
   (.addHandler (:handlers webserver-context) handler)
@@ -617,8 +617,8 @@
     (merge options overrides)))
 
 (schema/defn ^:always-validate shutdown
-  [{:keys [server] :as webserver-context} :- ServerContext]
-  (when-let [mbean-container (:mbean-container @(:state webserver-context))]
+  [{:keys [^Server server] :as webserver-context} :- ServerContext]
+  (when-let [^MBeanContainer mbean-container (:mbean-container @(:state webserver-context))]
     (log/debug (i18n/trs "Cleaning up JMX MBean container"))
     (.destroy mbean-container)
     (swap! (:state webserver-context) assoc :mbean-container nil))
@@ -678,8 +678,8 @@
                                   webserver-context
                                   options))
         ^Server s             (create-server webserver-context config)
-        ^HandlerCollection hc (HandlerCollection.)
-        log-handler (config/maybe-init-log-handler options)]
+        ^HandlerCollection hc (HandlerCollection.)]
+        ;_log-handler (config/maybe-init-log-handler options)]
     (.setHandlers hc (into-array Handler [(:handlers webserver-context)]))
     (let [shutdown-timeout (when (not (nil? (:shutdown-timeout-seconds options)))
                              (* 1000 (:shutdown-timeout-seconds options)))
@@ -692,13 +692,13 @@
                                    maybe-zipped
                                    max-size)
                                   maybe-zipped)
-          maybe-logged (if log-handler
-                         (doto log-handler (.setHandler maybe-size-restricted))
-                         maybe-size-restricted)
+          ;maybe-logged (if log-handler
+          ;               (doto log-handler (.setHandler maybe-size-restricted))
+          ;               maybe-size-restricted)
           statistics-handler (if (or (nil? shutdown-timeout) (pos? shutdown-timeout))
                                (doto (StatisticsHandler.)
-                                 (.setHandler maybe-logged))
-                               maybe-logged)]
+                                 (.setHandler maybe-size-restricted))
+                               maybe-size-restricted)]
       (.setHandler s statistics-handler)
       (when shutdown-timeout
         (.setStopTimeout s shutdown-timeout))
@@ -738,7 +738,7 @@
          normalize-request-uri? (:normalize-request-uri? options)]
      (.setBaseResource handler (Resource/newResource ^String base-path))
      (if follow-links?
-       (.setAliasChecks handler [(AllowSymLinkAliasChecker.)])
+       (.setAliasChecks handler (SymlinkAllowedResourceAliasChecker. handler))
        (.clearAliasChecks handler))
      ;; register servlet context listeners (if any)
      (when-not (nil? context-listeners)
@@ -765,20 +765,20 @@
                        (.setHandler handler))]
     (add-handler webserver-context ctxt-handler enable-trailing-slash-redirect?)))
 
-(schema/defn ^:always-validate
-  add-websocket-handler :- ContextHandler
-  [webserver-context :- ServerContext
-   handlers :- websockets/WebsocketHandlers
-   path :- schema/Str
-   enable-trailing-slash-redirect? :- schema/Bool
-   normalize-request-uri? :- schema/Bool]
-  (let [handler
-        (normalized-uri-helpers/handler-maybe-wrapped-with-normalized-uri
-         (websockets/websocket-handler handlers)
-         normalize-request-uri?)
-        ctxt-handler (doto (ContextHandler. path)
-                       (.setHandler handler))]
-    (add-handler webserver-context ctxt-handler enable-trailing-slash-redirect?)))
+;(schema/defn ^:always-validate
+;  add-websocket-handler :- ContextHandler
+;  [webserver-context :- ServerContext
+;   handlers :- websockets/WebsocketHandlers
+;   path :- schema/Str
+;   enable-trailing-slash-redirect? :- schema/Bool
+;   normalize-request-uri? :- schema/Bool]
+;  (let [handler
+;        (normalized-uri-helpers/handler-maybe-wrapped-with-normalized-uri
+;         (websockets/websocket-handler handlers)
+;         normalize-request-uri?)
+;        ctxt-handler (doto (ContextHandler. path)
+;                       (.setHandler handler))]
+;    (add-handler webserver-context ctxt-handler enable-trailing-slash-redirect?)))
 
 (schema/defn ^:always-validate
   add-servlet-handler :- ContextHandler
@@ -1071,23 +1071,23 @@
     (register-endpoint! state endpoint-map path)
     (add-ring-handler s handler path enable-redirect normalize-request-uri)))
 
-(schema/defn ^:always-validate add-websocket-handler!
-  [context
-   handlers :- websockets/WebsocketHandlers
-   path :- schema/Str
-   options :- CommonOptions]
-  (let [server-id     (:server-id options)
-        s             (get-server-context context server-id)
-        state         (:state s)
-        endpoint-map  {:type     :websocket}
-        enable-redirect  (get options :redirect-if-no-trailing-slash false)
-        normalize-request-uri (get options :normalize-request-uri false)]
-    (register-endpoint! state endpoint-map path)
-    (add-websocket-handler s
-                           handlers
-                           path
-                           enable-redirect
-                           normalize-request-uri)))
+;(schema/defn ^:always-validate add-websocket-handler!
+;  [context
+;   handlers :- websockets/WebsocketHandlers
+;   path :- schema/Str
+;   options :- CommonOptions]
+;  (let [server-id     (:server-id options)
+;        s             (get-server-context context server-id)
+;        state         (:state s)
+;        endpoint-map  {:type     :websocket}
+;        enable-redirect  (get options :redirect-if-no-trailing-slash false)
+;        normalize-request-uri (get options :normalize-request-uri false)]
+;    (register-endpoint! state endpoint-map path)
+;    (add-websocket-handler s
+;                           handlers
+;                           path
+;                           enable-redirect
+;                           normalize-request-uri)))
 
 (schema/defn ^:always-validate add-servlet-handler!
   [context servlet path options :- ServletHandlerOptions]

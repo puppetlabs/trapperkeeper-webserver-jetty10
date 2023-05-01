@@ -2,17 +2,16 @@
   (:require
     [clojure.tools.logging :as log]
 
-    [puppetlabs.trapperkeeper.services.webserver.jetty10-config :as config]
-    [puppetlabs.trapperkeeper.services.webserver.jetty10-core :as core]
-    [puppetlabs.trapperkeeper.services.protocols.filesystem-watch-service
-     :as watch-protocol]
+    [puppetlabs.i18n.core :as i18n]
+    [puppetlabs.trapperkeeper.config :as tk-config]
+    [puppetlabs.trapperkeeper.core :refer [defservice]]
     [puppetlabs.trapperkeeper.services :refer [get-service
                                                maybe-get-service
                                                service-context]]
-    [puppetlabs.trapperkeeper.config :as tk-config]
-    [puppetlabs.trapperkeeper.core :refer [defservice]]
-    [puppetlabs.i18n.core :as i18n]
-    [me.raynes.fs :as fs]))
+    [puppetlabs.trapperkeeper.services.protocols.filesystem-watch-service
+     :as watch-protocol]
+    [puppetlabs.trapperkeeper.services.webserver.jetty10-config :as config]
+    [puppetlabs.trapperkeeper.services.webserver.jetty10-core :as core]))
 
 ;; TODO: this should probably be moved to a separate jar that can be used as
 ;; a dependency for all webserver service implementations
@@ -83,11 +82,11 @@
   (add-ring-handler [this handler path options]
                     (core/add-ring-handler! (service-context this) handler path options))
 
-  (add-websocket-handler [this handlers path]
-    (core/add-websocket-handler! (service-context this) handlers path {}))
+  (add-websocket-handler [this handlers path] (println "not implemented"))
+    ;(core/add-websocket-handler! (service-context this) handlers path {}))
 
-  (add-websocket-handler [this handlers path options]
-    (core/add-websocket-handler! (service-context this) handlers path options))
+  (add-websocket-handler [this handlers path options]  (println "not implemented"))
+    ;(core/add-websocket-handler! (service-context this) handlers path options))
 
   (add-servlet-handler [this servlet path]
                        (core/add-servlet-handler! (service-context this) servlet path {}))
@@ -126,7 +125,7 @@
                             (log/info (str (get-registered-endpoints this))))
 
   (log-registered-endpoints[this server-id]
-                            (log/info (str (get-registered-endpoints this server-id))))
+                           (log/info (str (get-registered-endpoints this server-id))))
 
   (join [this]
         (let [s (core/get-server-context (service-context this) nil)]

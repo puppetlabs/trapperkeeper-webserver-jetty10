@@ -1,4 +1,4 @@
-(def jetty-version "9.4.48.v20220622")
+(def jetty-version "10.0.15")
 
 (defproject puppetlabs/trapperkeeper-webserver-jetty10 "0.0.0-SNAPSHOT"
   :description "A jetty10-based webserver implementation for use with the puppetlabs/trapperkeeper service framework."
@@ -22,16 +22,15 @@
                  [org.codehaus.janino/janino]
                  [org.flatland/ordered "1.5.9"]
 
-                 [javax.servlet/javax.servlet-api "3.1.0"]
+                 [javax.servlet/javax.servlet-api "4.0.1"]
                  ;; Jetty Webserver
-                 [org.eclipse.jetty/jetty-server ~jetty-version
-                  :exclusions [org.eclipse.jetty.orbit/javax.servlet]]
+                 [org.eclipse.jetty/jetty-server ~jetty-version]
                  [org.eclipse.jetty/jetty-servlet ~jetty-version]
                  [org.eclipse.jetty/jetty-servlets ~jetty-version]
                  [org.eclipse.jetty/jetty-webapp ~jetty-version]
                  [org.eclipse.jetty/jetty-proxy ~jetty-version]
                  [org.eclipse.jetty/jetty-jmx ~jetty-version]
-                 [org.eclipse.jetty.websocket/websocket-server ~jetty-version]
+                ; [org.eclipse.jetty.websocket/websocket-jetty-server ~jetty-version]
 
                  [prismatic/schema]
                  [ring/ring-servlet]
@@ -71,30 +70,24 @@
                                        "examples/webrouting_app/src"]
                         :java-source-paths ["examples/servlet_app/src/java"
                                             "test/java"]
-                        :dependencies [[puppetlabs/http-client]
-                                       [puppetlabs/kitchensink nil :classifier "test"]
-                                       [puppetlabs/trapperkeeper nil :classifier "test"]
-                                       [org.clojure/tools.namespace]
-                                       [compojure]
-                                       [ring/ring-core]]
                         :resource-paths ["dev-resources"]
                         :jvm-opts ["-Djava.util.logging.config.file=dev-resources/logging.properties"]}
 
              :dev [:defaults
                    {:dependencies [[org.bouncycastle/bcpkix-jdk18on]
-                                   [stylefruits/gniazdo nil :exclusions [org.eclipse.jetty.websocket/websocket-api
-                                                                         org.eclipse.jetty.websocket/websocket-client
-                                                                         org.eclipse.jetty/jetty-util]]]}]
+                                   [puppetlabs/http-client]
+                                   [puppetlabs/kitchensink nil :classifier "test"]
+                                   [puppetlabs/trapperkeeper nil :classifier "test"]
+                                   [org.clojure/tools.namespace]
+                                   [compojure]
+                                   [ring/ring-core]]}]
+
 
              ;; per https://github.com/technomancy/leiningen/issues/1907
              ;; the provided profile is necessary for lein jar / lein install
              :provided {:dependencies [[org.bouncycastle/bcpkix-jdk18on]]
                         :resource-paths ["dev-resources"]}
-             ;; a pseudo dev profile that can be combined with the FIPS profiling for testing only
-             :pseudo-dev {:dependencies [
-                                         [stylefruits/gniazdo nil :exclusions [org.eclipse.jetty.websocket/websocket-api
-                                                                               org.eclipse.jetty.websocket/websocket-client
-                                                                               org.eclipse.jetty/jetty-util]]]}
+
              :fips [:defaults ; merge in the default profile
                     {:dependencies [[org.bouncycastle/bcpkix-fips]
                                     [org.bouncycastle/bc-fips]
@@ -110,7 +103,7 @@
                                                         :minor minor})]
                                   (condp = (java.lang.Integer/parseInt major)
                                     11 ["-Djava.security.properties==dev-resources/jdk11-fips-security"]
-                                    17 ["-Djava.security.properties==dev-resources/jdk11-fips-security"]
+                                    17 ["-Djava.security.properties==dev-resources/jdk17-fips-security"]
                                     (throw unsupported-ex)))}]
 
              :testutils {:source-paths ^:replace ["test/clj"]

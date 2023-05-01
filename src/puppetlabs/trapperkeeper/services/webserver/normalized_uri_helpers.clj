@@ -1,17 +1,16 @@
 (ns puppetlabs.trapperkeeper.services.webserver.normalized-uri-helpers
-  (:import (javax.servlet.http HttpServletRequest HttpServletResponse)
-           (org.eclipse.jetty.util URIUtil)
-           (org.eclipse.jetty.server Request)
-           (org.eclipse.jetty.server.handler HandlerWrapper AbstractHandler)
-           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils
-            HttpServletRequestWithAlternateRequestUri)
-           (javax.servlet Filter DispatcherType)
-           (java.util EnumSet)
-           (org.eclipse.jetty.servlet FilterHolder ServletContextHandler))
-  (:require [schema.core :as schema]
+  (:require [puppetlabs.i18n.core :as i18n]
             [ring.util.servlet :as servlet]
-            [clojure.string :as str]
-            [puppetlabs.i18n.core :as i18n]))
+            [schema.core :as schema])
+  (:import (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils
+             HttpServletRequestWithAlternateRequestUri)
+           (java.util EnumSet)
+           (javax.servlet DispatcherType Filter)
+           (javax.servlet.http HttpServletRequest HttpServletResponse)
+           (org.eclipse.jetty.server Request)
+           (org.eclipse.jetty.server.handler AbstractHandler HandlerWrapper)
+           (org.eclipse.jetty.servlet FilterHolder ServletContextHandler)
+           (org.eclipse.jetty.util URIUtil)))
 
 (schema/defn ^:always-validate normalize-uri-path :- schema/Str
   "Return a 'normalized' version of the uri path represented on the incoming
@@ -41,8 +40,8 @@
             (not= (.length percent-decoded-uri-path)
                   (.length canonicalized-uri-path)))
       (throw (IllegalArgumentException.
-               (i18n/trs "Invalid relative path (.. or .) in: {0}"
-                         percent-decoded-uri-path)))
+               ^String (i18n/trs "Invalid relative path (.. or .) in: {0}"
+                                 percent-decoded-uri-path)))
       (URIUtil/compactPath canonicalized-uri-path))))
 
 (schema/defn ^:always-validate
