@@ -1,8 +1,8 @@
 (ns puppetlabs.trapperkeeper.services.webrouting.webrouting-service-core
-  (:require [schema.core :as schema]
-            [puppetlabs.trapperkeeper.services.webserver.jetty10-core :as jetty10-core]
+  (:require [puppetlabs.i18n.core :as i18n]
             [puppetlabs.trapperkeeper.services :as tk-services]
-            [puppetlabs.i18n.core :as i18n]))
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-core :as jetty10-core]
+            [schema.core :as schema]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Schemas
@@ -49,18 +49,20 @@
         no-server?      (nil? (schema/check schema/Str endpoint))
         server?         (nil? (schema/check RouteWithServerConfig endpoint))]
     (cond
-      no-service?     (throw
-                        (IllegalArgumentException.
-                          (i18n/trs "service {0} does not appear in configuration" svc)))
-      no-endpoint?    (throw
-                        (IllegalArgumentException.
-                          (i18n/trs "endpoint with id {0} does not appear in configuration for service {1}"
-                                    route-id
-                                    svc)))
+      no-service?
+      (throw
+        (IllegalArgumentException.
+          (i18n/trs "service {0} does not appear in configuration" svc)))
+      no-endpoint?
+      (throw
+        (IllegalArgumentException.
+          (i18n/trs "endpoint with id {0} does not appear in configuration for service {1}"
+               route-id
+               svc)))
       (and no-route-id? multi-route?)
-                      (throw
-                        (IllegalArgumentException.
-                          (i18n/trs "no route-id specified for a service with multiple routes")))
+      (throw
+        (IllegalArgumentException.
+          (i18n/trs "no route-id specified for a service with multiple routes")))
       no-server?      {:route endpoint :server nil}
       server?         endpoint)))
 
@@ -85,9 +87,10 @@
   (let [configuration (into {} (for [[svc svc-config] config]
                                  (cond
                                    (nil? (schema/check (schema/either schema/Str RouteWithServerConfig) svc-config))
-                                     [svc {:default svc-config}]
+                                   [svc {:default svc-config}]
+
                                    (nil? (schema/check WebroutingMultipleConfig svc-config))
-                                     [svc svc-config])))]
+                                   [svc svc-config])))]
     (assoc context :web-router-service configuration)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

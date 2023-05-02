@@ -1,25 +1,24 @@
 (ns puppetlabs.trapperkeeper.services.webserver.jetty10-config
-  (:import (java.security KeyStore)
-           (java.io FileInputStream)
-           (java.util HashMap)
-           (ch.qos.logback.access PatternLayout)
-           (ch.qos.logback.core CoreConstants)
-           (org.eclipse.jetty.server.handler RequestLogHandler)
-           (org.eclipse.jetty.server Server)
-           (org.codehaus.janino ScriptEvaluator)
-           (org.codehaus.commons.compiler CompileException)
-           (java.lang.reflect InvocationTargetException)
-           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils
-            LifeCycleImplementingRequestLogImpl
-            MDCAccessLogConverter MDCRequestLogHandler)
-           (com.puppetlabs.ssl_utils SSLUtils))
-  (:require [clojure.tools.logging :as log]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [me.raynes.fs :as fs]
-            [schema.core :as schema]
+            [puppetlabs.i18n.core :as i18n]
+            [puppetlabs.kitchensink.core :refer [parse-bool uuid]]
             [puppetlabs.ssl-utils.core :as ssl]
-            [puppetlabs.kitchensink.core :refer [missing? num-cpus uuid parse-bool]]
-            [puppetlabs.i18n.core :as i18n]))
+            [schema.core :as schema])
+  (:import (ch.qos.logback.core CoreConstants)
+           (com.puppetlabs.ssl_utils SSLUtils)
+           ;(com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils
+           ;  LifeCycleImplementingRequestLogImpl
+           ;  MDCAccessLogConverter MDCRequestLogHandler)
+           (java.io FileInputStream)
+           (java.lang.reflect InvocationTargetException)
+           (java.security KeyStore)
+           (java.util HashMap)
+           (org.codehaus.commons.compiler CompileException)
+           (org.codehaus.janino ScriptEvaluator)
+           (org.eclipse.jetty.server Server)
+           (org.eclipse.jetty.server.handler RequestLogHandler)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Constants / Defaults
@@ -299,18 +298,17 @@
 
 (schema/defn ^:always-validate
   get-jks-keystore-config! :- WebserverSslKeystoreConfig
-  [{:keys [truststore keystore key-password trust-password]}
-      :- WebserverRawConfig]
+  [{:keys [truststore keystore key-password trust-password]} :- WebserverRawConfig]
   (when (some nil? [truststore keystore key-password trust-password])
     (throw (IllegalArgumentException.
-             (i18n/trs "Missing some SSL configuration; must provide either :ssl-cert, :ssl-key, and :ssl-ca-cert, OR :truststore, :trust-password, :keystore, and :key-password."))))
-  {:keystore (doto (ssl/keystore)
-               (.load (FileInputStream. keystore)
-                      (.toCharArray key-password)))
-   :truststore (doto (ssl/keystore)
-                 (.load (FileInputStream. truststore)
-                        (.toCharArray trust-password)))
-   :key-password key-password
+             ^String (i18n/trs "Missing some SSL configuration; must provide either :ssl-cert, :ssl-key, and :ssl-ca-cert, OR :truststore, :trust-password, :keystore, and :key-password."))))
+  {:keystore       (doto (ssl/keystore)
+                     (.load (FileInputStream. ^String keystore)
+                            (.toCharArray key-password)))
+   :truststore     (doto (ssl/keystore)
+                     (.load (FileInputStream. ^String truststore)
+                            (.toCharArray trust-password)))
+   :key-password   key-password
    :trust-password trust-password})
 
 (schema/defn ^:always-validate
@@ -458,26 +456,27 @@
                (i18n/trs "Either host, port, ssl-host, or ssl-port must be specified on the config in order for the server to be started"))))
     result))
 
-(schema/defn ^:always-validate
-  init-log-handler :- RequestLogHandler
-  [config :- WebserverRawConfig]
-  (let [handler (MDCRequestLogHandler.)
-        pattern-rules (HashMap.)
-        logger (LifeCycleImplementingRequestLogImpl.)]
-    (doseq [pattern ["X" "mdc"]]
-      (.put pattern-rules
-            pattern
-            (.getName MDCAccessLogConverter)))
-    (.putObject logger CoreConstants/PATTERN_RULE_REGISTRY pattern-rules)
-    (.setFileName logger (:access-log-config config))
-    (.setQuiet logger true)
-    (.setRequestLog handler logger)
-    handler))
-
-(defn maybe-init-log-handler
-  [config]
-  (if (:access-log-config config)
-    (init-log-handler config)))
+;(schema/defn ^:always-validate
+;  init-log-handler :- RequestLogHandler
+;  [config :- WebserverRawConfig]
+;
+;  (let [handler (MDCRequestLogHandler.)
+;        pattern-rules (HashMap.)
+;        logger (LifeCycleImplementingRequestLogImpl.)]
+;    (doseq [pattern ["X" "mdc"]]
+;      (.put pattern-rules
+;            pattern
+;            (.getName MDCAccessLogConverter)))
+;    (.putObject logger CoreConstants/PATTERN_RULE_REGISTRY pattern-rules)
+;    (.setFileName logger (:access-log-config config))
+;    (.setQuiet logger true)
+;    (.setRequestLog handler logger)
+;    handler))
+;
+;(defn maybe-init-log-handler
+;  [config]
+;  (if (:access-log-config config)
+;    (init-log-handler config)))
 
 (schema/defn ^:always-validate
   execute-post-config-script!

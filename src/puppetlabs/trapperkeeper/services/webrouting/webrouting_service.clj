@@ -1,11 +1,8 @@
 (ns puppetlabs.trapperkeeper.services.webrouting.webrouting-service
   (:require
-    [clojure.tools.logging :as log]
-
-    [puppetlabs.trapperkeeper.services :refer [service-context]]
-    [puppetlabs.trapperkeeper.services.webrouting.webrouting-service-core :as core]
     [puppetlabs.trapperkeeper.core :refer [defservice]]
-    [schema.core :as schema]))
+    [puppetlabs.trapperkeeper.services :refer [service-context]]
+    [puppetlabs.trapperkeeper.services.webrouting.webrouting-service-core :as core]))
 
 (defprotocol WebroutingService
   (get-route [this svc] [this svc route-id])
@@ -140,5 +137,5 @@
           (join)))
 
   (join [this server-id]
-               (let [join (:join WebserverService)]
-                 (join server-id))))
+        (let [join (:join WebserverService)]
+          (join server-id))))
