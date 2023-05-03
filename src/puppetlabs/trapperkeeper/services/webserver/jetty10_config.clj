@@ -6,11 +6,10 @@
             [puppetlabs.kitchensink.core :refer [parse-bool uuid]]
             [puppetlabs.ssl-utils.core :as ssl]
             [schema.core :as schema])
-  (:import (ch.qos.logback.core CoreConstants)
+  (:import (ch.qos.logback.access.jetty RequestLogImpl)
+           (ch.qos.logback.core CoreConstants)
            (com.puppetlabs.ssl_utils SSLUtils)
-           ;(com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils
-           ;  LifeCycleImplementingRequestLogImpl
-           ;  MDCAccessLogConverter MDCRequestLogHandler)
+           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils MDCAccessLogConverter MDCRequestLogHandler)
            (java.io FileInputStream)
            (java.lang.reflect InvocationTargetException)
            (java.security KeyStore)
@@ -453,30 +452,31 @@
                                              :jmx-enable default-jmx-enable))))]
     (when-not (some #(contains? result %) [:http :https])
       (throw (IllegalArgumentException.
-               (i18n/trs "Either host, port, ssl-host, or ssl-port must be specified on the config in order for the server to be started"))))
+               ^String (i18n/trs "Either host, port, ssl-host, or ssl-port must be specified on the config in order for the server to be started"))))
     result))
 
-;(schema/defn ^:always-validate
-;  init-log-handler :- RequestLogHandler
-;  [config :- WebserverRawConfig]
-;
-;  (let [handler (MDCRequestLogHandler.)
-;        pattern-rules (HashMap.)
-;        logger (LifeCycleImplementingRequestLogImpl.)]
-;    (doseq [pattern ["X" "mdc"]]
-;      (.put pattern-rules
-;            pattern
-;            (.getName MDCAccessLogConverter)))
-;    (.putObject logger CoreConstants/PATTERN_RULE_REGISTRY pattern-rules)
-;    (.setFileName logger (:access-log-config config))
-;    (.setQuiet logger true)
-;    (.setRequestLog handler logger)
-;    handler))
-;
-;(defn maybe-init-log-handler
-;  [config]
-;  (if (:access-log-config config)
-;    (init-log-handler config)))
+(schema/defn ^:always-validate
+  init-log-handler :- RequestLogHandler
+  [config :- WebserverRawConfig]
+
+  (let [handler (MDCRequestLogHandler.)
+        pattern-rules (HashMap.)
+        logger (RequestLogImpl.)]
+
+    (doseq [pattern ["X" "mdc"]]
+      (.put pattern-rules
+            pattern
+            (.getName MDCAccessLogConverter)))
+    (.putObject logger CoreConstants/PATTERN_RULE_REGISTRY pattern-rules)
+    (.setFileName logger (:access-log-config config))
+    (.setQuiet logger true)
+    (.setRequestLog handler logger)
+    handler))
+
+(defn maybe-init-log-handler
+  [config]
+  (when (:access-log-config config)
+    (init-log-handler config)))
 
 (schema/defn ^:always-validate
   execute-post-config-script!
