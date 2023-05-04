@@ -24,7 +24,7 @@
            (javax.servlet Servlet ServletContextListener)
            (javax.servlet.http HttpServletResponse)
            (org.eclipse.jetty.client HttpClient RedirectProtocolHandler)
-           (org.eclipse.jetty.http HttpHeader HttpHeaderValue HttpMethod MimeTypes)
+           (org.eclipse.jetty.http HttpHeader HttpHeaderValue HttpMethod MimeTypes UriCompliance)
            (org.eclipse.jetty.jmx MBeanContainer)
            (org.eclipse.jetty.proxy ProxyServlet)
            (org.eclipse.jetty.server AbstractConnectionFactory ConnectionFactory Handler HttpConfiguration
@@ -266,8 +266,14 @@
   [request-header-size]
   (let [http-config (doto (HttpConfiguration.)
                       (.setSendDateHeader true)
-                      (.setSendServerVersion false))]
-    (if request-header-size
+                      (.setSendServerVersion false)
+                      ;; LEGACY uri compliance mode that models Jetty-9.4 behavior by allowing
+                      ;; UriCompliance.Violation.AMBIGUOUS_PATH_SEGMENT, UriCompliance.Violation.AMBIGUOUS_EMPTY_SEGMENT,
+                      ;; UriCompliance.Violation.AMBIGUOUS_PATH_SEPARATOR, UriCompliance.Violation.AMBIGUOUS_PATH_ENCODING
+                      ;; and UriCompliance.Violation.UTF16_ENCODINGS
+                      ;; https://www.eclipse.org/jetty/javadoc/jetty-10/org/eclipse/jetty/http/UriCompliance.html#LEGACY
+                      (.setUriCompliance UriCompliance/LEGACY))]
+    (when request-header-size
       (.setRequestHeaderSize http-config request-header-size))
     http-config))
 
@@ -738,7 +744,7 @@
          normalize-request-uri? (:normalize-request-uri? options)]
      (.setBaseResource handler (Resource/newResource ^String base-path))
      (if follow-links?
-       (.setAliasChecks handler (SymlinkAllowedResourceAliasChecker. handler))
+       (.setAliasChecks handler (list (SymlinkAllowedResourceAliasChecker. handler)))
        (.clearAliasChecks handler))
      ;; register servlet context listeners (if any)
      (when-not (nil? context-listeners)
