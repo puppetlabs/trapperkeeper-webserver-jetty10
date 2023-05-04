@@ -360,7 +360,9 @@
                                        :target-path "/ernie"}
                                       {:type :proxy :target-host "localhost" :target-port 10000
                                        :target-path "/kermit"}]
-                              "/quux" [{:type :websocket}]})))))))
+                              ;; websocket code currently disabled
+                              ;;"/quux" [{:type :websocket}]
+                              })))))))
 
   (testing "Log endpoints"
     (with-test-logging
