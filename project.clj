@@ -80,7 +80,10 @@
                                    [puppetlabs/trapperkeeper nil :classifier "test"]
                                    [org.clojure/tools.namespace]
                                    [compojure]
-                                   [ring/ring-core]]}]
+                                   [ring/ring-core]
+                                   [ch.qos.logback/logback-classic "1.2.12"]
+                                   [ch.qos.logback/logback-core "1.2.12"]
+                                   [ch.qos.logback/logback-access "1.2.12"]]}]
 
 
              ;; per https://github.com/technomancy/leiningen/issues/1907

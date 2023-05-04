@@ -684,8 +684,8 @@
                                   webserver-context
                                   options))
         ^Server s             (create-server webserver-context config)
-        ^HandlerCollection hc (HandlerCollection.)]
-        ;_log-handler (config/maybe-init-log-handler options)]
+        ^HandlerCollection hc (HandlerCollection.)
+         log-handler (config/maybe-init-log-handler options)]
     (.setHandlers hc (into-array Handler [(:handlers webserver-context)]))
     (let [shutdown-timeout (when (not (nil? (:shutdown-timeout-seconds options)))
                              (* 1000 (:shutdown-timeout-seconds options)))
@@ -698,13 +698,13 @@
                                    maybe-zipped
                                    max-size)
                                   maybe-zipped)
-          ;maybe-logged (if log-handler
-          ;               (doto log-handler (.setHandler maybe-size-restricted))
-          ;               maybe-size-restricted)
+          maybe-logged (if log-handler
+                         (doto log-handler (.setHandler maybe-size-restricted))
+                         maybe-size-restricted)
           statistics-handler (if (or (nil? shutdown-timeout) (pos? shutdown-timeout))
                                (doto (StatisticsHandler.)
-                                 (.setHandler maybe-size-restricted))
-                               maybe-size-restricted)]
+                                 (.setHandler maybe-logged))
+                               maybe-logged)]
       (.setHandler s statistics-handler)
       (when shutdown-timeout
         (.setStopTimeout s shutdown-timeout))

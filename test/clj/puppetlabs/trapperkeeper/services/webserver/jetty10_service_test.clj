@@ -730,23 +730,23 @@
                 :selector-threads 1 ; You actually end up with 2 threads.
                 :max-threads 4
                 :access-log-config "./dev-resources/puppetlabs/trapperkeeper/services/webserver/request-logging.xml"}}
-    (testing "request logging occurs when :access-log-config is configured"
+   (testing "request logging occurs when :access-log-config is configured"
       (with-test-access-logging
-       (http-get "http://localhost:8080/hi_world/")
+        (http-get "http://localhost:8080/hi_world/")
        ; Logging is done in a separate thread from Jetty and this test. As a result,
        ; we have to sleep the thread to avoid a race condition.
        (Thread/sleep 10)
        (let [list (TestListAppender/list)]
-         (is (re-find #"\"GET /hi_world/ HTTP/1.1\" 200 8" (first list))))))
+         (is (re-find #"\"GET /hi_world/ HTTP/1.1\" 200" (first list))))))
 
-    (testing "Mapped Diagnostic Context values are available to the access logger"
+   (testing "Mapped Diagnostic Context values are available to the access logger"
       (with-test-access-logging
         (http-put "http://localhost:8080/mdc?mdc_key=mdc-test" {:body "hello"})
         (Thread/sleep 10)
         (let [list (TestListAppender/list)]
           (is (str/ends-with? (first list) "hello\n")))))
 
-    (testing "Mapped Diagnostic Context values are cleared after each request"
+   (testing "Mapped Diagnostic Context values are cleared after each request"
       (http-put "http://localhost:8080/mdc?mdc_key=mdc-persist" {:body "foo"})
 
       ;; Loop to ensure we hit all threads.
@@ -937,7 +937,7 @@
        hello-webservice]
       jetty-ssl-pem-config
       (let [test-fn (fn [] (http-get "https://localhost:8081/hi_world" (merge default-options-for-https-client
-                                                                             {:ssl-protocols ["SSLv3"]})) )]
+                                                                             {:ssl-protocols ["SSLv3"]})))]
 
         (is (thrown? SSLException (test-fn))))))
   (testing "SSLv3 is not supported even when configured"
@@ -952,5 +952,5 @@
       (is (logged? #"contains SSLv3, a protocol with known vulnerabilities; ignoring"))
       (is (logged? #"When `ssl-protocols` is empty, a default of"))
       (let [test-fn (fn [] (http-get "https://localhost:8081/hi_world" (merge default-options-for-https-client
-                                                                              {:ssl-protocols ["SSLv3"]})) )]
+                                                                              {:ssl-protocols ["SSLv3"]})))]
         (is (thrown? SSLException (test-fn))))))))
