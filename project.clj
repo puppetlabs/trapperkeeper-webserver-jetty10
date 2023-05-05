@@ -72,29 +72,28 @@
                                             "test/java"]
                         :resource-paths ["dev-resources"]
                         :jvm-opts ["-Djava.util.logging.config.file=dev-resources/logging.properties"]}
-
+             :pseudo-dev [:defaults
+                          {:dependencies [[puppetlabs/http-client]
+                                          [puppetlabs/kitchensink nil :classifier "test"]
+                                          [puppetlabs/trapperkeeper nil :classifier "test"]
+                                          [org.clojure/tools.namespace]
+                                          [compojure]
+                                          [ring/ring-core]
+                                          [ch.qos.logback/logback-classic "1.2.12"]
+                                          [ch.qos.logback/logback-core "1.2.12"]
+                                          [ch.qos.logback/logback-access "1.2.12"]]}]
              :dev [:defaults
-                   {:dependencies [[org.bouncycastle/bcpkix-jdk18on]
-                                   [puppetlabs/http-client]
-                                   [puppetlabs/kitchensink nil :classifier "test"]
-                                   [puppetlabs/trapperkeeper nil :classifier "test"]
-                                   [org.clojure/tools.namespace]
-                                   [compojure]
-                                   [ring/ring-core]
-                                   [ch.qos.logback/logback-classic "1.2.12"]
-                                   [ch.qos.logback/logback-core "1.2.12"]
-                                   [ch.qos.logback/logback-access "1.2.12"]]}]
-
+                   :pseudo-dev
+                   {:dependencies [[org.bouncycastle/bcpkix-jdk18on]]}]
 
              ;; per https://github.com/technomancy/leiningen/issues/1907
              ;; the provided profile is necessary for lein jar / lein install
              :provided {:dependencies [[org.bouncycastle/bcpkix-jdk18on]]
                         :resource-paths ["dev-resources"]}
 
-             :fips [:defaults ; merge in the default profile
-                    {:dependencies [[org.bouncycastle/bcpkix-fips]
-                                    [org.bouncycastle/bc-fips]
-                                    [org.bouncycastle/bctls-fips]]
+             :fips {:dependencies [[org.bouncycastle/bcpkix-fips]
+                                   [org.bouncycastle/bc-fips]
+                                   [org.bouncycastle/bctls-fips]]
                      :exclusions [[org.bouncycastle/bcpkix-jdk18on]]
                      ;; this only ensures that we run with the proper profiles
                      ;; during testing. This JVM opt will be set in the puppet module
@@ -107,7 +106,7 @@
                                   (condp = (java.lang.Integer/parseInt major)
                                     11 ["-Djava.security.properties==dev-resources/jdk11-fips-security"]
                                     17 ["-Djava.security.properties==dev-resources/jdk17-fips-security"]
-                                    (throw unsupported-ex)))}]
+                                    (throw unsupported-ex)))}
 
              :testutils {:source-paths ^:replace ["test/clj"]
                          :java-source-paths ^:replace ["test/java"]}}
