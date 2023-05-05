@@ -192,6 +192,9 @@
    :protocols                          (schema/maybe [schema/Str])
    (schema/optional-key :allow-renegotiation)     (schema/maybe schema/Bool)})
 
+(def WebserverClientSslContextFactory
+  (dissoc WebserverSslContextFactory :client-auth))
+
 (def WebserverSslConnector
   (merge
     WebserverConnector
