@@ -97,6 +97,7 @@
          {(schema/optional-key :cipher-suites) [schema/Str]
           (schema/optional-key :protocols)     (schema/maybe [schema/Str])
           (schema/optional-key :allow-renegotiation)     (schema/maybe [schema/Bool])}))
+
 (defn positive-integer?
   [i]
   (and (integer? i)
@@ -210,8 +211,6 @@
   "Creates a new SslContextFactory instance from a map of SSL config options."
   [{:keys [keystore-config ssl-crl-path cipher-suites protocols allow-renegotiation]}
    :- config/WebserverClientSslContextFactory]
-  (if (some #(= "sslv3" %) (map str/lower-case protocols))
-    (log/warn (i18n/trs "`ssl-protocols` contains SSLv3, a protocol with known vulnerabilities; ignoring")))
 
   (let [context (doto (SslContextFactory$Client.)
                   (.setKeyStore (:keystore keystore-config))
@@ -228,7 +227,6 @@
                   (.setExcludeProtocols (into-array String []))
                   (.setIncludeProtocols (into-array String (filter #(not= "sslv3" (str/lower-case %)) protocols))))]
     (when (empty? (.getIncludeProtocols context))
-      (log/warn (i18n/trs "When `ssl-protocols` is empty, a default of {0} is assumed" SSLUtils/TLS_PROTOCOL))
       (.setIncludeProtocols context (into-array String [SSLUtils/TLS_PROTOCOL])))
     (when (SSLUtils/isFIPS)
       (doto context
@@ -258,8 +256,7 @@
   "Creates a new SslContextFactory instance from a map of SSL config options."
   [{:keys [keystore-config client-auth ssl-crl-path cipher-suites protocols allow-renegotiation]}
    :- config/WebserverSslContextFactory]
-
-  (if (some #(= "sslv3" %) (map str/lower-case protocols))
+  (when (some #(= "sslv3" %) (map str/lower-case protocols))
     (log/warn (i18n/trs "`ssl-protocols` contains SSLv3, a protocol with known vulnerabilities; ignoring")))
 
   (let [context (doto (InternalSslContextFactory.)
@@ -602,6 +599,7 @@
         (when-let [callback-fn (:callback-fn options)]
           (callback-fn proxy-request req))
         (proxy-super sendProxyRequest req proxy-response proxy-request)))))
+
 (schema/defn ^:always-validate
   register-endpoint!
   [state :- Atom
@@ -1047,7 +1045,9 @@
   [ssl-context-factory :- InternalSslContextFactory
    watcher :- (schema/protocol watch-protocol/Watcher)]
   (when-let [crl-path (.getCrlPath ssl-context-factory)]
-    (let [normalized-crl-path (.getCanonicalPath (fs/file crl-path))]
+    (let [normalized-crl-path (.getCanonicalPath (fs/file crl-path))
+          parent (fs/parent crl-path)]
+      (log/debug (i18n/trs "Setting up file watcher on {0}" (.toString parent)))
       (watch-protocol/add-watch-dir! watcher (fs/parent crl-path))
       (watch-protocol/add-callback!
        watcher
@@ -1057,6 +1057,7 @@
                        (= (.getCanonicalPath (:changed-path %))
                           normalized-crl-path))
                      events)
+           (log/debug (i18n/trs "CRL reload triggered"))
            (.reload ssl-context-factory)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

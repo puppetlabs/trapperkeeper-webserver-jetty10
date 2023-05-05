@@ -58,7 +58,7 @@
                                                     second
                                                     :state
                                                     deref
-                                                    :ssl-context-factory)]
+                                                    :ssl-context-server-factory)]
                    (core/reload-crl-on-change! ssl-context-factory watcher)))
                (assoc started-context :watcher watcher))
              started-context)))
