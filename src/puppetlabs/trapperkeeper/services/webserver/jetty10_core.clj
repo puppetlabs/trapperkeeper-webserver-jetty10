@@ -731,8 +731,7 @@
         ^HandlerCollection hc (HandlerCollection.)
          log-handler (config/maybe-init-log-handler options)]
     (.setHandlers hc (into-array Handler [(:handlers webserver-context)]))
-    (let [shutdown-timeout (when (not (nil? (:shutdown-timeout-seconds options)))
-                             (* 1000 (:shutdown-timeout-seconds options)))
+    (let [shutdown-timeout (* 1000 (:shutdown-timeout-seconds options config/default-shutdown-timeout-seconds))
           maybe-zipped (if (:gzip-enable options true)
                          (gzip-handler hc)
                          hc)
@@ -751,6 +750,7 @@
                                maybe-logged)]
       (.setHandler s statistics-handler)
       (when shutdown-timeout
+        (log/info (i18n/trs "Server shutdown timeout set to {0} milliseconds" shutdown-timeout))
         (.setStopTimeout s shutdown-timeout))
       (when-let [script (:post-config-script options)]
         (config/execute-post-config-script! s script))
