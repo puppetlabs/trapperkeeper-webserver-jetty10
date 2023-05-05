@@ -24,20 +24,23 @@
            (javax.servlet Servlet ServletContextListener)
            (javax.servlet.http HttpServletResponse)
            (org.eclipse.jetty.client HttpClient RedirectProtocolHandler)
-           (org.eclipse.jetty.http HttpHeader HttpHeaderValue HttpMethod MimeTypes UriCompliance)
+           (org.eclipse.jetty.client.dynamic HttpClientTransportDynamic)
+           (org.eclipse.jetty.client.http HttpClientConnectionFactory)
+           (org.eclipse.jetty.http HttpHeader HttpHeaderValue HttpMethod HttpStatus MimeTypes UriCompliance)
+           (org.eclipse.jetty.io ClientConnectionFactory$Info ClientConnector)
            (org.eclipse.jetty.jmx MBeanContainer)
            (org.eclipse.jetty.proxy ProxyServlet)
            (org.eclipse.jetty.server AbstractConnectionFactory ConnectionFactory Handler HttpConfiguration
                                      HttpConnectionFactory Request
                                      Server ServerConnector SymlinkAllowedResourceAliasChecker)
-           (org.eclipse.jetty.server.handler AbstractHandler AllowSymLinkAliasChecker ContextHandler
+           (org.eclipse.jetty.server.handler AbstractHandler ContextHandler
                                              ContextHandlerCollection HandlerCollection
                                              HandlerWrapper StatisticsHandler)
            (org.eclipse.jetty.server.handler.gzip GzipHandler)
            (org.eclipse.jetty.servlet DefaultServlet ServletContextHandler ServletHolder)
            (org.eclipse.jetty.util BlockingArrayQueue URIUtil)
            (org.eclipse.jetty.util.resource Resource)
-           (org.eclipse.jetty.util.ssl SslContextFactory)
+           (org.eclipse.jetty.util.ssl SslContextFactory$Client SslContextFactory$Server)
            (org.eclipse.jetty.util.thread QueuedThreadPool)
            (org.eclipse.jetty.webapp WebAppContext)))
 
@@ -93,7 +96,15 @@
   (merge config/WebserverSslPemConfig
          {(schema/optional-key :cipher-suites) [schema/Str]
           (schema/optional-key :protocols)     (schema/maybe [schema/Str])
-          (schema/optional-key :allow-renegotiations)     (schema/maybe [schema/Bool])}))
+          (schema/optional-key :allow-renegotiation)     (schema/maybe [schema/Bool])}))
+(defn positive-integer?
+  [i]
+  (and (integer? i)
+       (pos? i)))
+
+(def PosInt
+  "Any integer z in Z where z > 0."
+  (schema/pred positive-integer? 'positive-integer?))
 
 (def ProxyOptions
   (assoc CommonOptions
@@ -104,11 +115,9 @@
                                         map?     ProxySslConfig)
     (schema/optional-key :rewrite-uri-callback-fn) (schema/pred ifn?)
     (schema/optional-key :callback-fn) (schema/pred ifn?)
-    (schema/optional-key :failure-callback-fn) (schema/pred ifn?)
     (schema/optional-key :request-buffer-size) schema/Int
     (schema/optional-key :follow-redirects) schema/Bool
-    (schema/optional-key :idle-timeout) (schema/both schema/Int
-                                                     (schema/pred pos?))))
+    (schema/optional-key :idle-timeout) PosInt))
 
 (def ContextEndpoint
   {:type                                    (schema/eq :context)
@@ -152,7 +161,8 @@
    :overrides-read-by-webserver schema/Bool
    :overrides (schema/maybe {schema/Keyword schema/Any})
    :endpoints RegisteredEndpoints
-   :ssl-context-factory (schema/maybe InternalSslContextFactory)})
+   :ssl-context-server-factory (schema/maybe SslContextFactory$Server)
+   :ssl-context-client-factory (schema/maybe SslContextFactory$Client)})
 
 (def ServerContext
   {:state     (schema/atom ServerContextState)
@@ -196,10 +206,59 @@
 ;;; SSL Context Functions
 
 (schema/defn ^:always-validate
-  ssl-context-factory :- SslContextFactory
+  ssl-context-client-factory :- SslContextFactory$Client
+  "Creates a new SslContextFactory instance from a map of SSL config options."
+  [{:keys [keystore-config ssl-crl-path cipher-suites protocols allow-renegotiation]}
+   :- config/WebserverClientSslContextFactory]
+  (if (some #(= "sslv3" %) (map str/lower-case protocols))
+    (log/warn (i18n/trs "`ssl-protocols` contains SSLv3, a protocol with known vulnerabilities; ignoring")))
+
+  (let [context (doto (SslContextFactory$Client.)
+                  (.setKeyStore (:keystore keystore-config))
+                  (.setKeyStorePassword (:key-password keystore-config))
+                  (.setTrustStore (:truststore keystore-config))
+                  ;; Need to clear out the default cipher suite exclude list so
+                  ;; that Jetty doesn't potentially remove one or more ciphers
+                  ;; that we want to be included.
+                  (.setExcludeCipherSuites (into-array String []))
+                  (.setIncludeCipherSuites (into-array String cipher-suites))
+                  ;; Need to clear out the default protocols exclude list so
+                  ;; that Jetty doesn't potentially remove one or more protocols
+                  ;; that we want to be included.
+                  (.setExcludeProtocols (into-array String []))
+                  (.setIncludeProtocols (into-array String (filter #(not= "sslv3" (str/lower-case %)) protocols))))]
+    (when (empty? (.getIncludeProtocols context))
+      (log/warn (i18n/trs "When `ssl-protocols` is empty, a default of {0} is assumed" SSLUtils/TLS_PROTOCOL))
+      (.setIncludeProtocols context (into-array String [SSLUtils/TLS_PROTOCOL])))
+    (when (SSLUtils/isFIPS)
+      (doto context
+        (.setKeyStoreType SSLUtils/BOUNCYCASTLE_FIPS_KEYSTORE)
+        (.setTrustStoreType SSLUtils/BOUNCYCASTLE_FIPS_KEYSTORE)
+        (.setKeyStoreProvider SSLUtils/FIPS_PROVIDER_CLASS)
+        (.setTrustStoreProvider SSLUtils/FIPS_PROVIDER_CLASS)
+        (.setKeyManagerFactoryAlgorithm SSLUtils/PKIX_KEYMANAGER_ALGO)
+        (.setTrustManagerFactoryAlgorithm SSLUtils/PKIX_KEYMANAGER_ALGO)))
+    (if (:trust-password keystore-config)
+      (.setTrustStorePassword context (:trust-password keystore-config)))
+
+    (if allow-renegotiation
+      (.setRenegotiationAllowed context true)
+      (.setRenegotiationAllowed context false))
+    (when ssl-crl-path
+      (.setCrlPath context ssl-crl-path)
+      ; .setValidatePeerCerts needs to be called with a value of 'true' in
+      ; order to force Jetty to actually use the CRL when validating client
+      ; certificates for a connection.
+      (.setValidatePeerCerts context true))
+    context))
+
+
+(schema/defn ^:always-validate
+  ssl-context-server-factory :- SslContextFactory$Server
   "Creates a new SslContextFactory instance from a map of SSL config options."
   [{:keys [keystore-config client-auth ssl-crl-path cipher-suites protocols allow-renegotiation]}
    :- config/WebserverSslContextFactory]
+
   (if (some #(= "sslv3" %) (map str/lower-case protocols))
     (log/warn (i18n/trs "`ssl-protocols` contains SSLv3, a protocol with known vulnerabilities; ignoring")))
 
@@ -246,18 +305,17 @@
     context))
 
 (schema/defn ^:always-validate
-  get-proxy-client-context-factory :- SslContextFactory
+  get-proxy-client-context-factory :- SslContextFactory$Client
   [ssl-config :- ProxySslConfig]
-  (ssl-context-factory {:keystore-config
-                         (config/pem-ssl-config->keystore-ssl-config
-                           ssl-config)
-                        :client-auth :none
-                        :cipher-suites (or (:cipher-suites ssl-config) (if (SSLUtils/isFIPS)
-                                                                         config/acceptable-ciphers-fips
-                                                                         config/acceptable-ciphers))
-                        :protocols     (or (:protocols ssl-config) config/default-protocols)
-                        :allow-renegotiation  (or (:allow-renegotiation ssl-config)
-                                                  config/default-allow-renegotiation)}))
+  (ssl-context-client-factory {:keystore-config
+                                (config/pem-ssl-config->keystore-ssl-config
+                                  ssl-config)
+                               :cipher-suites (or (:cipher-suites ssl-config) (if (SSLUtils/isFIPS)
+                                                                                config/acceptable-ciphers-fips
+                                                                                config/acceptable-ciphers))
+                               :protocols     (or (:protocols ssl-config) config/default-protocols)
+                               :allow-renegotiation  (or (:allow-renegotiation ssl-config)
+                                                         config/default-allow-renegotiation)}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Jetty Server / Connector Functions
@@ -278,7 +336,7 @@
     http-config))
 
 (defn- connection-factories
-  [request-header-size ssl-ctxt-factory]
+  [request-header-size ^SslContextFactory$Server ssl-ctxt-factory]
   (let [http-config (http-configuration request-header-size)
         factories   (into-array ConnectionFactory
                                 [(HttpConnectionFactory. http-config)])]
@@ -296,7 +354,7 @@
   [server :- Server
    config :- (merge config/WebserverConnector
                     {schema/Keyword schema/Any})
-   ssl-ctxt-factory :- (schema/maybe SslContextFactory)]
+   ssl-ctxt-factory :- (schema/maybe SslContextFactory$Server)]
   (let [request-size (:request-header-max-size config)
         connector   (doto (ServerConnector.
                             server
@@ -314,7 +372,7 @@
   ssl-connector  :- ServerConnector
   "Creates a ssl ServerConnector instance."
   [server            :- Server
-   ssl-ctxt-factory  :- SslContextFactory
+   ssl-ctxt-factory  :- SslContextFactory$Server
    config :- config/WebserverSslConnector]
   (connector* server config ssl-ctxt-factory))
 
@@ -376,8 +434,8 @@
   "Construct a Jetty Server instance."
   [webserver-context :- ServerContext
    config :- config/WebserverConfig]
-  (let [server (if-let [pool (queue-thread-pool (:max-threads config)
-                                                (:queue-max-size config))]
+  (let [server (if-let [^QueuedThreadPool pool (queue-thread-pool (:max-threads config)
+                                                                  (:queue-max-size config))]
                  (Server. pool)
                  (Server.))]
     (when (:jmx-enable config)
@@ -390,16 +448,25 @@
       (let [connector (plaintext-connector server (:http config))]
         (.addConnector server connector)))
     (when-let [https (:https config)]
-      (let [ssl-ctxt-factory (ssl-context-factory
-                               (select-keys https
-                                            [:keystore-config :client-auth
-                                             :ssl-crl-path :cipher-suites
-                                             :allow-renegotiation
-                                             :protocols]))
-            connector        (ssl-connector server ssl-ctxt-factory https)]
+      (let [ssl-ctxt-server-factory (ssl-context-server-factory
+                                      (select-keys https
+                                                   [:keystore-config :client-auth
+                                                    :ssl-crl-path :cipher-suites
+                                                    :allow-renegotiation
+                                                    :protocols]))
+            ssl-ctx-client-factory (ssl-context-client-factory
+                                      (select-keys https
+                                                   [:keystore-config
+                                                    :ssl-crl-path :cipher-suites
+                                                    :allow-renegotiation
+                                                    :protocols]))
+            connector        (ssl-connector server ssl-ctxt-server-factory https)]
 
         (.addConnector server connector)
-        (swap! (:state webserver-context) assoc :ssl-context-factory ssl-ctxt-factory)))
+        (swap! (:state webserver-context)
+               assoc
+               :ssl-context-server-factory ssl-ctxt-server-factory
+               :ssl-context-client-factory ssl-ctx-client-factory)))
     server))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -470,9 +537,9 @@
   [webserver-context :- ServerContext
    target :- ProxyTarget
    options :- ProxyOptions]
-  (let [custom-ssl-ctxt-factory (when (map? (:ssl-config options))
-                                  (get-proxy-client-context-factory
-                                    (:ssl-config options)))
+  (let [custom-ssl-ctxt-factory (if (map? (:ssl-config options))
+                                    ^SslContextFactory$Client (get-proxy-client-context-factory (:ssl-config options))
+                                    (log/info (i18n/trs "Proxy not configured with custom ssl, using server default")))
         {:keys [request-buffer-size idle-timeout]} options]
     (proxy [ProxyServlet] []
       (rewriteTarget [req]
@@ -501,11 +568,19 @@
 
       (newHttpClient []
         (let [client (if custom-ssl-ctxt-factory
-                       (HttpClient. custom-ssl-ctxt-factory)
-                       (if-let [ssl-ctxt-factory (:ssl-context-factory
+                       (let [^ClientConnector connector (new ClientConnector)]
+                         (.setSslContextFactory connector custom-ssl-ctxt-factory)
+                         (new HttpClient (new HttpClientTransportDynamic connector (into-array ClientConnectionFactory$Info [HttpClientConnectionFactory/HTTP11]))))
+                       (if-let [ssl-ctxt-factory (:ssl-context-client-factory
                                                    @(:state webserver-context))]
-                         (HttpClient. ssl-ctxt-factory)
-                         (HttpClient.)))]
+                         (do
+                           (log/debug (i18n/trs "Proxy Using same config as server for ssl in proxy"))
+                           (let [connector (new ClientConnector)]
+                             (.setSslContextFactory connector ssl-ctxt-factory)
+                             (new HttpClient (new HttpClientTransportDynamic connector (into-array ClientConnectionFactory$Info [HttpClientConnectionFactory/HTTP11])))))
+                         (do
+                           (log/debug (i18n/trs "Proxy using default http client with no SSL specification."))
+                           (HttpClient.))))]
           (when request-buffer-size
             (.setRequestBufferSize client request-buffer-size))
           client))
@@ -523,40 +598,10 @@
             (.setIdleTimeout client timeout))
           client))
 
-      (sendProxyRequest [req resp proxy-req]
-        (if-let [callback-fn (:callback-fn options)]
-         (callback-fn proxy-req req))
-       (proxy-super sendProxyRequest req resp proxy-req))
-
-      ;; The implementation of onResponseFailure is duplicated heavily from:
-      ;; https://github.com/eclipse/jetty.project/blob/jetty-9.4.1.v20170120/jetty-proxy/src/main/java/org/eclipse/jetty/proxy/AbstractProxyServlet.java#L624-L658
-      ;; The only significant difference is that a 'failure-callback-fn', if
-      ;; defined in options, is invoked just prior to completing the async
-      ;; context for cases that the response was not already committed upstream.
-      (onProxyResponseFailure [req resp proxy-resp failure]
-        (do
-          (let [request-id    (.getRequestId this req)
-                async-context (.getAsyncContext req)]
-            (log/debug failure (i18n/trs "{0} proxying failed" request-id))
-            (if (.isCommitted resp)
-              (try
-                (.sendError resp -1)
-                (.complete async-context)
-                (catch IOException _
-                  (log/debug failure (i18n/trs "{0} could not close the connection"
-                                               request-id))))
-              (do
-                (.resetBuffer resp)
-                (if (instance? TimeoutException failure)
-                  (.setStatus resp HttpServletResponse/SC_GATEWAY_TIMEOUT)
-                  (.setStatus resp HttpServletResponse/SC_BAD_GATEWAY))
-                (.setHeader resp
-                            (.asString HttpHeader/CONNECTION)
-                            (.asString HttpHeaderValue/CLOSE))
-                (when-let [failure-callback-fn (:failure-callback-fn options)]
-                  (failure-callback-fn req resp proxy-resp failure))
-                (.complete async-context)))))))))
-
+      (sendProxyRequest [req proxy-response proxy-request]
+        (when-let [callback-fn (:callback-fn options)]
+          (callback-fn proxy-request req))
+        (proxy-super sendProxyRequest req proxy-response proxy-request)))))
 (schema/defn ^:always-validate
   register-endpoint!
   [state :- Atom
@@ -603,7 +648,8 @@
                    :mbean-container nil
                    :overrides-read-by-webserver false
                    :overrides nil
-                   :ssl-context-factory nil})
+                   :ssl-context-server-factory nil
+                   :ssl-context-client-factory nil})
      :server nil}))
 
 ; TODO move out of public
@@ -834,8 +880,7 @@
   :ssl-ca-cert, :ssl-cert, and :ssl-key), :rewrite-uri-callback-fn (a function
   taking two arguments, `[target-uri req]`, see README.md/#rewrite-uri-callback-fn),
   :callback-fn (a function taking two arguments, `[proxy-req req]`, see
-  README.md/#callback-fn) and :failure-callback-fn (a function taking four arguments,
-  `[req resp proxy-resp failure]`, see README.md/#failure-callback-fn).
+  README.md/#callback-fn).
   "
   [webserver-context :- ServerContext
    target :- ProxyTarget
@@ -940,19 +985,20 @@
     (swap! (:state webserver-context)
            #(cond
              (:overrides-read-by-webserver %)
-               (if (nil? (:overrides %))
-                 (throw
-                   (IllegalStateException.
-                     (i18n/trs "overrides cannot be set because webserver has already processed the config")))
-                 (throw
-                   (IllegalStateException.
-                     (i18n/trs "overrides cannot be set because they have already been set and webserver has already processed the config"))))
-             (nil? (:overrides %))
-               (assoc % :overrides overrides)
-             :else
+             (if (nil? (:overrides %))
                (throw
                  (IllegalStateException.
-                   (i18n/trs "overrides cannot be set because they have already been set")))))))
+                   ^String (i18n/trs "overrides cannot be set because webserver has already processed the config")))
+               (throw
+                 (IllegalStateException.
+                   ^String (i18n/trs "overrides cannot be set because they have already been set and webserver has already processed the config"))))
+             (nil? (:overrides %))
+             (assoc % :overrides overrides)
+
+             :else
+             (throw
+               (IllegalStateException.
+                 ^String (i18n/trs "overrides cannot be set because they have already been set")))))))
 
 (schema/defn ^:always-validate join
   [webserver-context :- ServerContext]
@@ -982,7 +1028,7 @@
                     server-id)]
     (when-not server-id
       (throw (IllegalArgumentException.
-               (i18n/trs "no server-id was specified for this operation and no default server was specified in the configuration"))))
+               ^String (i18n/trs "no server-id was specified for this operation and no default server was specified in the configuration"))))
     (server-id (:jetty10-servers service-context))))
 
 (defn get-default-server-from-config
@@ -1042,14 +1088,14 @@
         new-config (schema/check config/MultiWebserverRawConfig config)]
     (cond
       (nil? old-config)
-        (let [context (assoc context :jetty10-servers {:default (initialize-context)}
+      (let [context (assoc context :jetty10-servers {:default (initialize-context)}
                                      :default-server :default)]
           (doseq [content (:static-content config)]
             (add-context-handler! context (:resource content)
                                   (:path content) {:follow-links (true? (:follow-links content))}))
           context)
       (nil? new-config)
-        (let [context (build-server-contexts context config)]
+      (let [context (build-server-contexts context config)]
           (doseq [[server-id server-config] config
                   content (:static-content server-config)]
             (add-context-handler! context (:resource content)

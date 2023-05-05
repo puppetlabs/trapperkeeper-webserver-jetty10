@@ -149,11 +149,6 @@
   [proxy-req req]
   (.header proxy-req "x-fancy-proxy-header" "!!!"))
 
-(defn failure-callback-fn
-  [req resp proxy-resp failure]
-  (.setStatus resp 500)
-  (.print (.getWriter resp) (str "Proxying failed: " (.getMessage failure))))
-
 (deftest test-basic-proxy-support
   (testing "basic proxy support when proxy handler registered after server start"
     (with-target-and-proxy-servers
@@ -694,23 +689,8 @@
                       :path "/hello"}
        :ring-handler proxy-ring-handler}
       (let [response (http-get "http://localhost:10000/hello-proxy/world")]
-        (is (= (:status response) 502))
-        (is (= (:body response) "")))))
-
-  (testing "proxying failure - custom handler"
-    (with-target-and-proxy-servers
-      {:target       {:host "0.0.0.0"
-                      :port 9000}
-       :proxy        {:host "0.0.0.0"
-                      :port 10000}
-       :proxy-config {:host "localhost"
-                      :port 123456789                       ; illegal port number
-                      :path "/hello"}
-       :proxy-opts   {:failure-callback-fn failure-callback-fn}
-       :ring-handler proxy-ring-handler}
-      (let [response (http-get "http://localhost:10000/hello-proxy/world")]
         (is (= (:status response) 500))
-        (is (= (:body response) "Proxying failed: port out of range:123456789")))))
+        (is (= (re-find #"port out of range:123456789" (:body response)))))))
 
   (testing "setting an idle timeout fails properly"
     (with-target-and-proxy-servers

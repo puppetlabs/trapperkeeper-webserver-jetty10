@@ -164,7 +164,8 @@
                        :overrides-read-by-webserver false
                        :overrides nil
                        :endpoints {}
-                       :ssl-context-factory nil}
+                       :ssl-context-client-factory nil
+                       :ssl-context-server-factory nil}
         webserver-context (fn [state]
                             {:handlers (ContextHandlerCollection.)
                              :server nil
