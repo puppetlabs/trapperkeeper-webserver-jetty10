@@ -1,13 +1,13 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR Puppet <docs@puppet.com>
-# This file is distributed under the same license as the PACKAGE package.
+# This file is distributed under the same license as the puppetlabs.trapperkeeper_webserver_jetty10 package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: puppetlabs.trapperkeeper_webserver_jetty10 \n"
-"X-Git-Ref: febbde781f04fe3ebf782cf2ceaf32ae8da7e3f8\n"
+"X-Git-Ref: be07bdb609d02f1ab6be504711569c8381478fac\n"
 "Report-Msgid-Bugs-To: docs@puppet.com\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -28,10 +28,6 @@ msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webrouting/webrouting_service_core.clj
 msgid "no route-id specified for a service with multiple routes"
-msgstr ""
-
-#: src/puppetlabs/trapperkeeper/services/webserver/experimental/jetty10_websockets.clj
-msgid "No handler defined for websocket event ''{0}'' with args: ''{1}''"
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_config.clj
@@ -128,11 +124,15 @@ msgid "When `ssl-protocols` is empty, a default of {0} is assumed"
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
-msgid "{0} proxying failed"
+msgid "Proxy not configured with custom ssl, using server default"
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
-msgid "{0} could not close the connection"
+msgid "Proxy Using same config as server for ssl in proxy"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
+msgid "Proxy using default http client with no SSL specification."
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
@@ -151,6 +151,10 @@ msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
 msgid "Web server shutdown"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
+msgid "Server shutdown timeout set to {0} milliseconds"
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
@@ -180,6 +184,14 @@ msgstr ""
 msgid ""
 "no server-id was specified for this operation and no default server was "
 "specified in the configuration"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
+msgid "Setting up file watcher on {0}"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
+msgid "CRL reload triggered"
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_service.clj
