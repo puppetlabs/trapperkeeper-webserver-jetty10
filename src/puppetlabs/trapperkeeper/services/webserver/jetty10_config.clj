@@ -91,6 +91,13 @@
 ;;; leaving them on by default.
 (def default-jmx-enable "true")
 
+;;;
+;;; Timeouts
+;;;
+;;; The stop timeout is the graceful shutdown period beteween when a server is asked to stop and when
+;; any open connections are closed.  This default came from Jetty 9.4, which changed to 0 in Jetty 10
+(def default-shutdown-timeout-seconds 30)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Schemas
 

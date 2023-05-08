@@ -138,8 +138,8 @@ react accordingly."
 
 (deftest default-server-settings-test
   (let [server (Server.)]
-    ;; See: https://github.com/eclipse/jetty.project/blob/jetty-9.4.1.v20170120/jetty-util/src/main/java/org/eclipse/jetty/util/component/AbstractLifeCycle.java#L48
-    (is (= 30000 (.getStopTimeout server))
+    ;; See: https://github.com/eclipse/jetty.project/blob/jetty-10.0.15/jetty-server/src/main/java/org/eclipse/jetty/server/Server.java#L183-L186
+    (is (= 0 (.getStopTimeout server))
         "Unexpected default for 'shutdown-timeout-seconds'")
     ;; See: https://github.com/eclipse/jetty.project/blob/jetty-9.4.1.v20170120/jetty-util/src/main/java/org/eclipse/jetty/util/thread/QueuedThreadPool.java#L71
     (is (= 200 (get-max-threads-for-server server))
