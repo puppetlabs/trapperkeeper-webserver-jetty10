@@ -1,5 +1,8 @@
 (ns puppetlabs.trapperkeeper.services.webserver.jetty10-service-handlers-test
   (:require [clojure.test :refer :all]
+            [hato.client :as http]
+            [hato.websocket :as ws-client]
+            [puppetlabs.trapperkeeper.services.websocket-session :as ws-session]
             [puppetlabs.trapperkeeper.app :refer [get-service]]
             [puppetlabs.trapperkeeper.services.webserver.jetty10-service :refer :all]
             [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]
@@ -178,96 +181,117 @@
             (is (= (:status response) 200))
             (is (= (:body response) init-param-two))))))))
 
-;(deftest websocket-test
-;  (with-test-logging
-;    (testing "Websocket handlers"
-;      (with-app-with-config app
-;        [jetty10-service]
-;        jetty-plaintext-config
-;        (let [s                     (get-service app :WebserverService)
-;              add-websocket-handler (partial add-websocket-handler s)
-;              path                  "/test"
-;              connected              (atom 0)
-;              server-messages        (atom [])
-;              server-binary-messages (atom [])
-;              client-messages        (atom [])
-;              client-binary-messages (atom [])
-;              client-request-path    (atom "")
-;              client-remote-addr     (atom "")
-;              client-is-ssl          (atom nil)
-;              closed-request-path    (atom "")
-;              binary-client-message  (promise)
-;              closed                 (promise)
-;              handlers               {:on-connect (fn [ws]
-;                                                    (ws-session/send! ws "Hello client!")
-;                                                    (swap! connected inc)
-;                                                    (reset! client-request-path (ws-session/request-path ws))
-;                                                    (reset! client-remote-addr (.. (ws-session/remote-addr ws) (toString)))
-;                                                    (reset! client-is-ssl (ws-session/ssl? ws)))
-;                                      :on-text    (fn [ws text]
-;                                                    (ws-session/send! ws (str "You said: " text))
-;                                                    (swap! server-messages conj text))
-;                                      :on-bytes   (fn [ws bytes offset len]
-;                                                    (let [as-vec (vec bytes)]
-;                                                      (ws-session/send! ws (byte-array (reverse as-vec)))
-;                                                      (swap! server-binary-messages conj as-vec)))
-;                                      :on-error   (fn [ws error]) ;; TODO - Add test for on-error behaviour
-;                                      :on-close   (fn [ws code reason] (swap! connected dec)
-;                                                    (reset! closed-request-path (ws-session/request-path ws))
-;                                                    (deliver closed true))}]
-;          (add-websocket-handler handlers path)
-;          (let [socket (ws-client/connect (str "ws://localhost:8080" path "/foo")
-;                                          :on-receive (fn [text] (swap! client-messages conj text))
-;                                          :on-binary  (fn [bytes offset len]
-;                                                        (let [as-vec (vec bytes)]
-;                                                          (swap! client-binary-messages conj as-vec)
-;                                                          (deliver binary-client-message true))))]
-;            (ws-client/send-msg socket "Hello websocket handler")
-;            (ws-client/send-msg socket "You look dandy")
-;            (ws-client/send-msg socket (byte-array [2 1 2 3 3]))
-;            (deref binary-client-message)
-;            (is (= @connected 1))
-;            (is (= @client-request-path "/foo"))
-;            (is (re-matches #"/127\.0\.0\.1:\d+" @client-remote-addr))
-;            (is (= @client-is-ssl false))
-;            (ws-client/close socket)
-;            (deref closed)
-;            (is (= @closed-request-path "/foo"))
-;            (is (= @connected 0))
-;            (is (= @server-binary-messages [[2 1 2 3 3]]))
-;            (is (= @client-binary-messages [[3 3 2 1 2]]))
-;            (is (= @client-messages ["Hello client!"
-;                                     "You said: Hello websocket handler"
-;                                     "You said: You look dandy"]))
-;            (is (= @server-messages ["Hello websocket handler"
-;                                     "You look dandy"]))))))
-;    (testing "can close without supplying a reason"
-;      (with-app-with-config app
-;        [jetty10-service]
-;        jetty-plaintext-config
-;        (let [s                     (get-service app :WebserverService)
-;              add-websocket-handler (partial add-websocket-handler s)
-;              path                  "/test"
-;              closed                 (promise)
-;              handlers               {:on-connect (fn [ws] (ws-session/close! ws))}]
-;          (add-websocket-handler handlers path)
-;          (let [socket (ws-client/connect (str "ws://localhost:8080" path)
-;                                          :on-close (fn [code reason] (deliver closed code)))]
-;            ;; 1000 is for normal closure https://tools.ietf.org/html/rfc6455#section-7.4.1
-;            (is (= 1000 @closed))))))
-;    (testing "can close with reason"
-;      (with-app-with-config app
-;        [jetty10-service]
-;        jetty-plaintext-config
-;        (let [s                     (get-service app :WebserverService)
-;              add-websocket-handler (partial add-websocket-handler s)
-;              path                  "/test"
-;              closed                 (promise)
-;              handlers               {:on-connect (fn [ws] (ws-session/close! ws 4000 "Bye"))}]
-;          (add-websocket-handler handlers path)
-;          (let [socket (ws-client/connect (str "ws://localhost:8080" path)
-;                                          :on-close (fn [code reason] (deliver closed [code reason])))]
-;            (is (= [4000 "Bye"] @closed))))))))
+(deftest websocket-test
+  (with-test-logging
+    (testing "Websocket handlers"
+      (with-app-with-config app
+        [jetty10-service]
+        jetty-plaintext-config
+        (let [s                     (get-service app :WebserverService)
+              add-websocket-handler (partial add-websocket-handler s)
+              path                  "/test"
+              connected              (atom 0)
+              server-messages        (atom [])
+              server-binary-messages (atom [])
+              client-messages        (atom [])
+              client-binary-messages (atom [])
+              client-request-path    (atom "")
+              client-remote-addr     (atom "")
+              client-is-ssl          (atom nil)
+              closed-request-path    (atom "")
+              binary-client-message  (promise)
+              closed                 (promise)
+              handlers               {:on-connect (fn [ws]
+                                                    (ws-session/send! ws "Hello client!")
+                                                    (swap! connected inc)
+                                                    (reset! client-request-path (ws-session/request-path ws))
+                                                    (reset! client-remote-addr (.. (ws-session/remote-addr ws) (toString)))
+                                                    (reset! client-is-ssl (ws-session/ssl? ws)))
+                                      :on-text    (fn [ws text]
+                                                    (ws-session/send! ws (str "You said: " text))
+                                                    (swap! server-messages conj text))
+                                      :on-bytes   (fn [ws bytes offset len]
+                                                    (let [as-vec (vec bytes)]
+                                                      (ws-session/send! ws (byte-array (reverse as-vec)))
+                                                      (swap! server-binary-messages conj as-vec)))
+                                      :on-error   (fn [ws error])  ;; TODO - Add test for on-error behaviour
+                                      :on-close   (fn [ws code reason]
+                                                    (swap! connected dec)
+                                                    (reset! closed-request-path (ws-session/request-path ws))
+                                                    (deliver closed true))}]
+          (add-websocket-handler handlers path)
+          (let [socket @(ws-client/websocket (str "ws://localhost:8080" path "/foo")
+                                             {:on-message (fn [ws msg last?]
+                                                            ;; I don't know what it is but this homegrown instance? test
+                                                            ;; works, but (instance? java.nio.HeapCharBuffer msg) seemingly
+                                                            ;; crashes this function without exception
+                                                            (if (= (str (type msg)) "class java.nio.HeapCharBuffer")
+                                                              (swap! client-messages conj (str msg))
+                                                              ;; One would think there would be a java class function for this,
+                                                              ;; but I didn't see anything obvious, there is no backing array to call
+                                                              ;; https://resources.mpi-inf.mpg.de/d5/teaching/ss05/is05/javadoc/java/nio/CharBuffer.html#array()
+                                                              (let [char-buffer-array (loop [i 0
+                                                                                             array []]
+                                                                                        (if (= i 5)
+                                                                                          array
+                                                                                          (recur (+ i 1) (conj array (.get msg i)))))]
+                                                                (swap! client-binary-messages conj char-buffer-array)
+                                                                (deliver binary-client-message true))))
+                                              :http-client (http/build-http-client
+                                                            {:ssl-context {:insecure? true}})})]
+            (ws-client/send! socket "Hello websocket handler")
+            (ws-client/send! socket "You look dandy")
+            (ws-client/send! socket (byte-array [2 1 2 3 3]))
+            (deref binary-client-message)
+            (is (= @connected 1))
+            (is (= @client-request-path "/foo"))
+            (is (re-matches #"/127\.0\.0\.1:\d+" @client-remote-addr))
+            (is (= @client-is-ssl false))
+            (ws-client/close! socket)
+            (deref closed)
+            (is (= @closed-request-path "/foo"))
+            (is (= @connected 0))
+            (is (= @server-binary-messages [[2 1 2 3 3]]))
+            (is (= @client-binary-messages [[3 3 2 1 2]]))
+
+            (is (= @client-messages ["Hello client!"
+                                     "You said: Hello websocket handler"
+                                     "You said: You look dandy"]))
+            (is (= @server-messages ["Hello websocket handler"
+                                     "You look dandy"]))))))
+
+    (testing "can close without supplying a reason"
+      (with-app-with-config app
+        [jetty10-service]
+        jetty-plaintext-config
+        (let [s                     (get-service app :WebserverService)
+              add-websocket-handler (partial add-websocket-handler s)
+              path                  "/test"
+              closed                 (promise)
+              handlers               {:on-connect (fn [ws] (ws-session/close! ws))}]
+          (add-websocket-handler handlers path)
+          (let [_socket @(ws-client/websocket (str "ws://localhost:8080" path)
+                                              {:on-close (fn [ws code _reason] (deliver closed code))
+                                               :http-client (http/build-http-client
+                                                             {:ssl-context {:insecure? true}})})]
+            ;; 1000 is for normal closure https://tools.ietf.org/html/rfc6455#section-7.4.1
+            (is (= 1000 @closed))))))
+
+    (testing "can close with reason"
+      (with-app-with-config app
+        [jetty10-service]
+        jetty-plaintext-config
+        (let [s                     (get-service app :WebserverService)
+              add-websocket-handler (partial add-websocket-handler s)
+              path                  "/test"
+              closed                 (promise)
+              handlers               {:on-connect (fn [ws] (ws-session/close! ws 4000 "Bye"))}]
+          (add-websocket-handler handlers path)
+          (let [_socket @(ws-client/websocket (str "ws://localhost:8080" path)
+                                              {:on-close (fn [ws code reason] (deliver closed [code reason]))
+                                               :http-client (http/build-http-client
+                                                             {:ssl-context {:insecure? true}})})]
+            (is (= [4000 "Bye"] @closed))))))))
 
 (deftest war-test
   (with-test-logging
@@ -360,8 +384,7 @@
                                        :target-path "/ernie"}
                                       {:type :proxy :target-host "localhost" :target-port 10000
                                        :target-path "/kermit"}]
-                              ;; websocket code currently disabled
-                              ;;"/quux" [{:type :websocket}]
+                              "/quux" [{:type :websocket}]
                               })))))))
 
   (testing "Log endpoints"

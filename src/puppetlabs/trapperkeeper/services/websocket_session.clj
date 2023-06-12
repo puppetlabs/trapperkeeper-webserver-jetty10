@@ -1,4 +1,4 @@
-(ns puppetlabs.experimental.websockets.client)
+(ns puppetlabs.trapperkeeper.services.websocket-session)
 
 (defprotocol WebSocketProtocol
   "Functions to manage the lifecycle of a websocket session"

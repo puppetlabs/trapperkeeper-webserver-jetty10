@@ -28,7 +28,7 @@
   (join [this] [this server-id]))
 
 (defservice jetty10-service
-  "Provides a Jetty 9 web server as a service"
+  "Provides a Jetty 10 web server as a service"
   WebserverService
   {:required [ConfigService]
    :optional [FilesystemWatchService]}
@@ -82,11 +82,11 @@
   (add-ring-handler [this handler path options]
                     (core/add-ring-handler! (service-context this) handler path options))
 
-  (add-websocket-handler [this handlers path] (println "not implemented"))
-    ;(core/add-websocket-handler! (service-context this) handlers path {}))
+  (add-websocket-handler [this handlers path]
+    (core/add-websocket-handler! (service-context this) handlers path {}))
 
-  (add-websocket-handler [this handlers path options]  (println "not implemented"))
-    ;(core/add-websocket-handler! (service-context this) handlers path options))
+  (add-websocket-handler [this handlers path options]
+    (core/add-websocket-handler! (service-context this) handlers path options))
 
   (add-servlet-handler [this servlet path]
                        (core/add-servlet-handler! (service-context this) servlet path {}))

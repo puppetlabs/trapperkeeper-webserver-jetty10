@@ -5,8 +5,8 @@
             [puppetlabs.i18n.core :as i18n]
             [puppetlabs.trapperkeeper.services.protocols.filesystem-watch-service
              :as watch-protocol]
-           ; [puppetlabs.trapperkeeper.services.webserver.experimental.jetty10-websockets :as websockets]
             [puppetlabs.trapperkeeper.services.webserver.jetty10-config :as config]
+            [puppetlabs.trapperkeeper.services.webserver.jetty10-websockets :as websockets]
             [puppetlabs.trapperkeeper.services.webserver.normalized-uri-helpers
              :as normalized-uri-helpers]
             [ring.util.codec :as codec]
@@ -16,7 +16,6 @@
   (:import (clojure.lang Atom)
            (com.puppetlabs.ssl_utils SSLUtils)
            (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils InternalSslContextFactory)
-           (java.io IOException)
            (java.lang.management ManagementFactory)
            (java.net URI)
            (java.security Security)
@@ -26,7 +25,7 @@
            (org.eclipse.jetty.client HttpClient RedirectProtocolHandler)
            (org.eclipse.jetty.client.dynamic HttpClientTransportDynamic)
            (org.eclipse.jetty.client.http HttpClientConnectionFactory)
-           (org.eclipse.jetty.http HttpHeader HttpHeaderValue HttpMethod HttpStatus MimeTypes UriCompliance)
+           (org.eclipse.jetty.http HttpMethod MimeTypes UriCompliance)
            (org.eclipse.jetty.io ClientConnectionFactory$Info ClientConnector)
            (org.eclipse.jetty.jmx MBeanContainer)
            (org.eclipse.jetty.proxy ProxyServlet)
@@ -42,7 +41,8 @@
            (org.eclipse.jetty.util.resource Resource)
            (org.eclipse.jetty.util.ssl SslContextFactory$Client SslContextFactory$Server)
            (org.eclipse.jetty.util.thread QueuedThreadPool)
-           (org.eclipse.jetty.webapp WebAppContext)))
+           (org.eclipse.jetty.webapp WebAppContext)
+           (org.eclipse.jetty.websocket.server.config JettyWebSocketServletContainerInitializer)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; JDK SecurityProvider Hack
@@ -512,8 +512,8 @@
   ;; them if the handlers are already registered when the server is started.
   (if-let [server (.getServer handler)]
     (when (and (.isRunning server) (not (.isRunning handler)))
-      (.manage (:handlers webserver-context) handler)
-      (.start handler)))
+              (.manage (:handlers webserver-context) handler)
+              (.start handler)))
   handler)
 
 (defn- ring-handler
@@ -815,20 +815,24 @@
                        (.setHandler handler))]
     (add-handler webserver-context ctxt-handler enable-trailing-slash-redirect?)))
 
-;(schema/defn ^:always-validate
-;  add-websocket-handler :- ContextHandler
-;  [webserver-context :- ServerContext
-;   handlers :- websockets/WebsocketHandlers
-;   path :- schema/Str
-;   enable-trailing-slash-redirect? :- schema/Bool
-;   normalize-request-uri? :- schema/Bool]
-;  (let [handler
-;        (normalized-uri-helpers/handler-maybe-wrapped-with-normalized-uri
-;         (websockets/websocket-handler handlers)
-;         normalize-request-uri?)
-;        ctxt-handler (doto (ContextHandler. path)
-;                       (.setHandler handler))]
-;    (add-handler webserver-context ctxt-handler enable-trailing-slash-redirect?)))
+(schema/defn ^:always-validate
+  add-websocket-handler :- ContextHandler
+  [webserver-context :- ServerContext
+   handlers :- websockets/WebsocketHandlers
+   path :- schema/Str
+   enable-trailing-slash-redirect? :- schema/Bool
+   normalize-request-uri? :- schema/Bool]
+  (let [servlet (websockets/JettyWebSocketServletInstance handlers)
+        ctxt-handler (doto (ServletContextHandler. ServletContextHandler/SESSIONS)
+                       (.setContextPath path)
+                       (.setServer (:server webserver-context)))
+        holder (ServletHolder. servlet)]
+    (JettyWebSocketServletContainerInitializer/configure ctxt-handler nil)
+    (.addServlet ctxt-handler holder "/*")
+    (when normalize-request-uri?
+      (normalized-uri-helpers/add-normalized-uri-filter-to-servlet-handler!
+       ctxt-handler))
+    (add-handler webserver-context ctxt-handler enable-trailing-slash-redirect?)))
 
 (schema/defn ^:always-validate
   add-servlet-handler :- ContextHandler
@@ -1124,23 +1128,23 @@
     (register-endpoint! state endpoint-map path)
     (add-ring-handler s handler path enable-redirect normalize-request-uri)))
 
-;(schema/defn ^:always-validate add-websocket-handler!
-;  [context
-;   handlers :- websockets/WebsocketHandlers
-;   path :- schema/Str
-;   options :- CommonOptions]
-;  (let [server-id     (:server-id options)
-;        s             (get-server-context context server-id)
-;        state         (:state s)
-;        endpoint-map  {:type     :websocket}
-;        enable-redirect  (get options :redirect-if-no-trailing-slash false)
-;        normalize-request-uri (get options :normalize-request-uri false)]
-;    (register-endpoint! state endpoint-map path)
-;    (add-websocket-handler s
-;                           handlers
-;                           path
-;                           enable-redirect
-;                           normalize-request-uri)))
+(schema/defn ^:always-validate add-websocket-handler!
+  [context
+   handlers :- websockets/WebsocketHandlers
+   path :- schema/Str
+   options :- CommonOptions]
+  (let [server-id     (:server-id options)
+        s             (get-server-context context server-id)
+        state         (:state s)
+        endpoint-map  {:type     :websocket}
+        enable-redirect  (get options :redirect-if-no-trailing-slash false)
+        normalize-request-uri (get options :normalize-request-uri false)]
+    (register-endpoint! state endpoint-map path)
+    (add-websocket-handler s
+                           handlers
+                           path
+                           enable-redirect
+                           normalize-request-uri)))
 
 (schema/defn ^:always-validate add-servlet-handler!
   [context servlet path options :- ServletHandlerOptions]
