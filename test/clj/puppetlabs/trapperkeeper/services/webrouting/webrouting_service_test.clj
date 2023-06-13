@@ -1,8 +1,9 @@
 (ns puppetlabs.trapperkeeper.services.webrouting.webrouting-service-test
   (:require [clojure.test :refer :all]
             [clojure.tools.logging :as log]
-           ; [gniazdo.core :as ws-client]
-            [puppetlabs.experimental.websockets.client :as ws-session]
+            [hato.client :as http]
+            [hato.websocket :as ws-client]
+            [puppetlabs.trapperkeeper.services.websocket-session :as ws-session]
             [puppetlabs.kitchensink.testutils.fixtures :as ks-test-fixtures]
             [puppetlabs.trapperkeeper.app :as tk-app]
             [puppetlabs.trapperkeeper.services :as tk-services]
@@ -31,6 +32,8 @@
 
 (defprotocol TestService3)
 
+(defprotocol TestWebsocketService)
+
 (defprotocol NotReal
   (dummy [this]))
 
@@ -57,10 +60,12 @@
   [[:WebroutingService add-ring-handler]])
 
 (tk-services/defservice test-websocket-service
+  TestWebsocketService
   [[:WebroutingService add-websocket-handler]]
   (init [this context]
         (log/info "setting up webrouting websockets")
-        (let [handlers {:on-connect (fn [ws] (ws-session/send! ws "heyo"))}]
+        (let [handlers {:on-connect (fn [ws]
+                                      (ws-session/send! ws "heyo"))}]
           (add-websocket-handler this handlers))
         context))
 
@@ -106,8 +111,7 @@
 (deftest webrouting-service-test
   (with-test-logging
     (testing "Other services can successfully use webrouting service"
-      (with-app-with-config
-        app
+      (with-app-with-config app
         [jetty10-service webrouting-service test-service test-websocket-service]
         webrouting-plaintext-multiserver-multiroute-config
         (let [response (http-get "http://localhost:8080/foo/")]
@@ -121,12 +125,18 @@
           (is (= (:body response) "Hello World!")))
         (let [response (http-get "http://localhost:9000/bar/")]
           (is (= (:status response) 200))
-          (is (= (:body response) "Hello World!")))))
-        ;(let [message   (promise)
-        ;      websocket (ws-client/connect "ws://localhost:8080/baz"
-        ;                                   :on-receive (fn [text] (deliver message text)))]
-        ;  (is (= @message "heyo"))
-        ;  (ws-client/close websocket))))
+          (is (= (:body response) "Hello World!")))
+        (let [message   (promise)
+              websocket @(ws-client/websocket "ws://localhost:8080/baz"
+                                           {:on-message (fn [ws msg last?]
+                                                          (deliver message msg))
+                                            :http-client (http/build-http-client
+                                                          ;; Disabling SSL just because of encountering problems
+                                                          ;; with the JDK 11 HttpClient hato wraps and our current
+                                                          ;; java/bouncycastle security rules
+                                                          {:ssl-context {:insecure? true}})})]
+          (is (= (str @message) "heyo"))
+          (ws-client/close! websocket))))
 
     (testing "Error occurs when specifying service that does not exist in config file"
       (with-app-with-config

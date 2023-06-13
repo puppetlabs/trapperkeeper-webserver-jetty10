@@ -8,7 +8,7 @@
 
   :min-lein-version "2.9.1"
 
-  :parent-project {:coords [puppetlabs/clj-parent "5.2.9"]
+  :parent-project {:coords [puppetlabs/clj-parent "6.0.0"]
                    :inherit [:managed-dependencies]}
 
   ;; Abort when version ranges or version conflicts are detected in
@@ -30,7 +30,7 @@
                  [org.eclipse.jetty/jetty-webapp ~jetty-version]
                  [org.eclipse.jetty/jetty-proxy ~jetty-version]
                  [org.eclipse.jetty/jetty-jmx ~jetty-version]
-                ; [org.eclipse.jetty.websocket/websocket-jetty-server ~jetty-version]
+                 [org.eclipse.jetty.websocket/websocket-jetty-server ~jetty-version]
 
                  [prismatic/schema]
                  [ring/ring-servlet]
@@ -81,10 +81,12 @@
                                           [ring/ring-core]
                                           [ch.qos.logback/logback-classic "1.2.12"]
                                           [ch.qos.logback/logback-core "1.2.12"]
-                                          [ch.qos.logback/logback-access "1.2.12"]]}]
+                                          [ch.qos.logback/logback-access "1.2.12"]
+                                          [hato "0.9.0"]]}]
              :dev [:defaults
                    :pseudo-dev
-                   {:dependencies [[org.bouncycastle/bcpkix-jdk18on]]}]
+                   {:dependencies [[org.bouncycastle/bcpkix-jdk18on]
+                                   [hato "0.9.0"]]}]
 
              ;; per https://github.com/technomancy/leiningen/issues/1907
              ;; the provided profile is necessary for lein jar / lein install
@@ -93,7 +95,8 @@
 
              :fips {:dependencies [[org.bouncycastle/bcpkix-fips]
                                    [org.bouncycastle/bc-fips]
-                                   [org.bouncycastle/bctls-fips]]
+                                   [org.bouncycastle/bctls-fips]
+                                   [hato "0.9.0"]]
                      :exclusions [[org.bouncycastle/bcpkix-jdk18on]]
                      ;; this only ensures that we run with the proper profiles
                      ;; during testing. This JVM opt will be set in the puppet module
