@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: puppetlabs.trapperkeeper_webserver_jetty10 \n"
-"X-Git-Ref: be07bdb609d02f1ab6be504711569c8381478fac\n"
+"X-Git-Ref: 63fcc1cece021ee74b393ee4d50e19b01f53497f\n"
 "Report-Msgid-Bugs-To: docs@puppet.com\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -204,6 +204,10 @@ msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_service.clj
 msgid "Shutting down web server(s)."
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_websockets.clj
+msgid "No handler defined for websocket event ''{0}'' with args: ''{1}''"
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/normalized_uri_helpers.clj
