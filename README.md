@@ -15,12 +15,10 @@ file, via:
     puppetlabs.trapperkeeper.services.webserver.jetty10-service/jetty10-service
 
 Note that this implementation of the
-`:WebserverService` interface is based on Jetty 9, which contains performance
-improvements over previous versions of Jetty that may be significant depending on
-your application.  This service requires JRE 1.7 or greater;
+`:WebserverService` interface is based on Jetty 10.  This service requires JDK 11 or greater;
 however, the interface is intended to be agnostic to the underlying web server
 implementation.  We also provide a
-[Jetty 7 version of the service](https://github.com/puppetlabs/trapperkeeper-webserver-jetty7),
+[Jetty 9 version of the service](https://github.com/puppetlabs/trapperkeeper-webserver-jetty9),
 which can be used interchangeably with this one and will support older JDKs.
 You should only need to change your lein dependencies and your `bootstrap.cfg`
 file--no code changes.
@@ -366,10 +364,6 @@ For more information see the [example servlet app](examples/servlet_app).
 
 #### `add-websocket-handler`
 
-NOTE: Websockets support is currently an experimental feature; the
-API for websockets support may be subject to minor changes in a
-future release.
-
 `add-websocket-handler` takes two arguments: `[handlers path]`.
 The `handlers` is a map of callbacks to invoke when handling a websocket session.
 The `path` is the URL prefix where this websocket servlet will be registered.
@@ -386,7 +380,7 @@ The possible callbacks for the `handlers` map are:
 
 Querying data or sending messages over the websocket is supported by
 the functions of WebSocketProtocol protocol from the
-`puppetlabs.experimental.websocket.client` namespace:
+`puppetlabs.trapperkeeper.services.websocket-session` namespace:
 
 ```clj
 (connected? [this]
@@ -409,10 +403,10 @@ For example, to provide a simple websockets echo service as `/wsecho`:
 
 ```clj
 (ns foo
-   (:require [puppetlabs.experimental.websockets.client :as ws-client]))
+   (:require [puppetlabs.trapperkeeper.services.websocket-session :as ws-session]))
 
 (def echo-handlers
-  {:on-text (fn [ws text] (ws-client/send! ws text))})
+  {:on-text (fn [ws text] (ws-session/send! ws text))})
 
 (defservice wsecho-webservice
   [[:WebserverService add-websocket-handler]]
@@ -776,6 +770,4 @@ is available [here](doc/test-utils.md).
 
 ## Support
 
-We use the [Trapperkeeper project on JIRA](https://tickets.puppetlabs.com/browse/TK)
-for tickets on the Trapperkeeper Webserver Service, although Github issues are
-welcome too.
+For issues on the Trapperkeeper Webserver Service, submissions are welcome on [Trapperkeeper webserver project on GitHub](https://github.com/puppetlabs/trapperkeeper-webserver-jetty10/issues).

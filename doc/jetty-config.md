@@ -411,7 +411,7 @@ illustration):
                          c.setPort(10000);"
 
 For more info on the Jetty `Server` object model, see the
-[Jetty Javadocs](http://download.eclipse.org/jetty/stable-9/apidocs/org/eclipse/jetty/server/Server.html).
+[Jetty API documentation](https://www.eclipse.org/jetty/javadoc/jetty-10/org/eclipse/jetty/server/Server.html).
 
 ## Configuring multiple webservers on isolated ports
 
@@ -491,6 +491,6 @@ and will automatically make this server the default server.
 
 ### `jmx-enable`
 
-Optional. When enabled this setting will register the Jetty 9 MBeans so they are visible via
-JMX. Useful for monitoring the state of your Jetty 9 instance while it is running; for monitoring and
+Optional. When enabled this setting will register the Jetty 10 MBeans so they are visible via
+JMX. Useful for monitoring the state of your Jetty 10 instance while it is running; for monitoring and
 debugging purposes. Defaults to `true`.
