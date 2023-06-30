@@ -1,13 +1,13 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR Puppet <docs@puppet.com>
-# This file is distributed under the same license as the puppetlabs.trapperkeeper_webserver_jetty10 package.
+# This file is distributed under the same license as the com.puppetlabs.trapperkeeper_webserver_jetty10 package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: puppetlabs.trapperkeeper_webserver_jetty10 \n"
-"X-Git-Ref: 63fcc1cece021ee74b393ee4d50e19b01f53497f\n"
+"Project-Id-Version: com.puppetlabs.trapperkeeper_webserver_jetty10 \n"
+"X-Git-Ref: 2977990a2012b01cbbfbddc15b02fe0c12b7ed9c\n"
 "Report-Msgid-Bugs-To: docs@puppet.com\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -147,6 +147,12 @@ msgstr ""
 msgid ""
 "Web server failed to shut down gracefully in configured timeout period "
 "({0}); cancelling remaining requests."
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
+msgid ""
+"Web server failed to shut down gracefully due to ExecutionException with "
+"inner exception of type {0}; cancelling remaining requests."
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
