@@ -19,7 +19,7 @@
            (java.lang.management ManagementFactory)
            (java.net URI)
            (java.security Security)
-           (java.util.concurrent TimeoutException)
+           (java.util.concurrent TimeoutException ExecutionException)
            (javax.servlet Servlet ServletContextListener)
            (javax.servlet.http HttpServletResponse)
            (org.eclipse.jetty.client HttpClient RedirectProtocolHandler)
@@ -678,7 +678,14 @@
       (.stop server)
       (catch TimeoutException e
         (log/error e (i18n/trs "Web server failed to shut down gracefully in configured timeout period ({0}); cancelling remaining requests."
-                               (.getStopTimeout server)))))
+                               (.getStopTimeout server))))
+      ;; This exception handling was added since we currently manually stop handlers within pcp-broker
+      ;; for debugging purposes there - on shutdown if Jetty 10 sees a STOPPED handler it throws an
+      ;; ExecutionException with a IllegalStateExeception as it's cause and if unhandled shutdown
+      ;; stops and the server goes into a FAILED state
+      (catch ExecutionException e
+        (log/error (.getCause e) (i18n/trs "Web server failed to shut down gracefully due to ExecutionException with inner exception of type {0}; cancelling remaining requests."
+                                           (type (.getCause e))))))
     (log/info (i18n/trs "Web server shutdown"))))
 
 (schema/defn ^:always-validate

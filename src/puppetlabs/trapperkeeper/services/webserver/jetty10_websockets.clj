@@ -3,6 +3,7 @@
            (org.eclipse.jetty.websocket.api WebSocketAdapter Session)
            (org.eclipse.jetty.websocket.server JettyWebSocketServlet JettyWebSocketServletFactory JettyWebSocketCreator JettyServerUpgradeRequest JettyServerUpgradeResponse)
            (java.security.cert X509Certificate)
+           (java.time Duration)
            (java.nio ByteBuffer))
 
   (:require [clojure.tools.logging :as log]
@@ -54,7 +55,8 @@
   (request-path [this]
     (.. this (getRequestPath)))
   (idle-timeout! [this ms]
-    (.. this (getSession) (setIdleTimeout ^long ms)))
+    (let [duration-from-ms (Duration/ofMillis ms)]
+      (.. this (getSession) (setIdleTimeout ^Duration duration-from-ms))))
   (connected? [this]
     (. this (isConnected))))
 
