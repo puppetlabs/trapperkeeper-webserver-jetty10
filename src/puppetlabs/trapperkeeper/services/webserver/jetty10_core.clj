@@ -32,6 +32,7 @@
            (org.eclipse.jetty.server AbstractConnectionFactory ConnectionFactory Handler HttpConfiguration
                                      HttpConnectionFactory Request
                                      Server ServerConnector SymlinkAllowedResourceAliasChecker)
+           (org.eclipse.jetty.server.session SessionHandler)
            (org.eclipse.jetty.server.handler AbstractHandler ContextHandler
                                              ContextHandlerCollection HandlerCollection
                                              HandlerWrapper StatisticsHandler)
@@ -817,9 +818,12 @@
         (normalized-uri-helpers/handler-maybe-wrapped-with-normalized-uri
          (ring-handler handler)
          normalize-request-uri?)
+        sess-handler (doto (SessionHandler.)
+                       (.setHandler handler))
         path (if (= "" path) "/" path)
-        ctxt-handler (doto (ContextHandler. path)
-                       (.setHandler handler))]
+        ctxt-handler (doto (ServletContextHandler.)
+                       (.setContextPath path)
+                       (.setSessionHandler sess-handler))]
     (add-handler webserver-context ctxt-handler enable-trailing-slash-redirect?)))
 
 (schema/defn ^:always-validate
