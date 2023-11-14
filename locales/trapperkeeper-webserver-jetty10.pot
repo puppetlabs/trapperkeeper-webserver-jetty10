@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: com.puppetlabs.trapperkeeper_webserver_jetty10 \n"
-"X-Git-Ref: 2977990a2012b01cbbfbddc15b02fe0c12b7ed9c\n"
+"X-Git-Ref: 3e661bd11ef213aafbf337269a1609c46bc58f35\n"
 "Report-Msgid-Bugs-To: docs@puppet.com\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -214,6 +214,18 @@ msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_websockets.clj
 msgid "No handler defined for websocket event ''{0}'' with args: ''{1}''"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_websockets.clj
+msgid ""
+"Timed out after awaiting closure of websocket from remote for {0} seconds at "
+"request path {1}."
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_websockets.clj
+msgid ""
+"Thread was interrupted when awaiting closure of websocket from remote at "
+"request path {0}."
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/normalized_uri_helpers.clj
