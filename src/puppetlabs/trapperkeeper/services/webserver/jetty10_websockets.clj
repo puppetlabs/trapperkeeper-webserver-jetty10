@@ -4,6 +4,7 @@
            (org.eclipse.jetty.websocket.server JettyWebSocketServlet JettyWebSocketServletFactory JettyWebSocketCreator JettyServerUpgradeRequest JettyServerUpgradeResponse)
            (java.security.cert X509Certificate)
            (java.time Duration)
+           (java.util.concurrent CountDownLatch TimeUnit)
            (java.nio ByteBuffer))
 
   (:require [clojure.tools.logging :as log]
@@ -40,9 +41,13 @@
     (-send! msg this))
   (close!
     ([this]
-     (.. this (getSession) (close)))
+     ;; Close this side
+     (.. this (getSession) (close))
+     ;; Then wait for remote side to close
+     (.. this (awaitClosure)))
     ([this code reason]
-     (.. this (getSession) (close code reason))))
+     (.. this (getSession) (close code reason))
+     (.. this (awaitClosure))))
   (disconnect [this]
     (when-let [session (.getSession this)]
      (.disconnect session)))
@@ -64,6 +69,9 @@
   (^Object getCerts [])
   (^String getRequestPath []))
 
+(definterface ClosureLatchSyncer
+  (^Object awaitClosure []))
+
 (defn no-handler
   [event & args]
   (log/debug (i18n/trs "No handler defined for websocket event ''{0}'' with args: ''{1}''"
@@ -72,14 +80,15 @@
 (schema/defn ^:always-validate proxy-ws-adapter :- WebSocketAdapter
   [handlers :- WebsocketHandlers
    x509certs :- [X509Certificate]
-   requestPath :- String]
+   requestPath :- String
+   closureLatch :- CountDownLatch]
   (let [{:keys [on-connect on-error on-text on-close on-bytes]
          :or {on-connect (partial no-handler :on-connect)
               on-error   (partial no-handler :on-error)
               on-text    (partial no-handler :on-text)
               on-close   (partial no-handler :on-close)
               on-bytes   (partial no-handler :on-bytes)}} handlers]
-    (proxy [WebSocketAdapter CertGetter] []
+    (proxy [WebSocketAdapter CertGetter ClosureLatchSyncer] []
       (onWebSocketConnect [^Session session]
         (let [^WebSocketAdapter this this]
           (proxy-super onWebSocketConnect session))
@@ -95,11 +104,19 @@
       (onWebSocketClose [statusCode ^String reason]
         (let [^WebSocketAdapter this this]
           (proxy-super onWebSocketClose statusCode reason))
+        (.countDown closureLatch)
         (on-close this statusCode reason))
       (onWebSocketBinary [^bytes payload offset len]
         (let [^WebSocketAdapter this this]
           (proxy-super onWebSocketBinary payload offset len))
         (on-bytes this payload offset len))
+      (awaitClosure []
+        (try
+          (let [timeout-in-seconds 30]
+            (when-not (.await closureLatch timeout-in-seconds TimeUnit/SECONDS)
+              (log/info (i18n/trs "Timed out after awaiting closure of websocket from remote for {0} seconds at request path {1}." timeout-in-seconds requestPath))))
+          (catch InterruptedException e
+            (log/info e (i18n/trs "Thread was interrupted when awaiting closure of websocket from remote at request path {0}." requestPath)))))
       (getCerts [] x509certs)
       (getRequestPath [] requestPath))))
 
@@ -108,8 +125,10 @@
   (reify JettyWebSocketCreator
     (createWebSocket [_this ^JettyServerUpgradeRequest req ^JettyServerUpgradeResponse _res]
       (let [x509certs (vec (.. req (getCertificates)))
-            requestPath (.. req (getRequestPath))]
-        (proxy-ws-adapter handlers x509certs requestPath)))))
+            requestPath (.. req (getRequestPath))
+            ;; A simple gate to synchronize closure on server and client.
+            closureLatch (CountDownLatch. 1)]
+        (proxy-ws-adapter handlers x509certs requestPath closureLatch)))))
 
 (schema/defn JettyWebSocketServletInstance :- JettyWebSocketServlet
   [handlers]
