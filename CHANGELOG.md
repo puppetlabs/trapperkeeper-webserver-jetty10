@@ -1,3 +1,7 @@
+## 1.0.2
+
+Updated to Jetty 10.0.18, added ClosureLatchSyncer interface Jetty WebSocketAdapter object to sync closure of websocket client and server.
+
 ## 1.0.1
 
 Added ExecutionException handling when shutting down the server. Corrected WebSocketProtocol idle-timeout! function to produce a Duration.

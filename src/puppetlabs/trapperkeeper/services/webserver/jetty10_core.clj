@@ -681,7 +681,7 @@
                                (.getStopTimeout server))))
       ;; This exception handling was added since we currently manually stop handlers within pcp-broker
       ;; for debugging purposes there - on shutdown if Jetty 10 sees a STOPPED handler it throws an
-      ;; ExecutionException with a IllegalStateExeception as it's cause and if unhandled shutdown
+      ;; ExecutionException with a IllegalStateException as it's cause and if unhandled shutdown
       ;; stops and the server goes into a FAILED state
       (catch ExecutionException e
         (log/error (.getCause e) (i18n/trs "Web server failed to shut down gracefully due to ExecutionException with inner exception of type {0}; cancelling remaining requests."
