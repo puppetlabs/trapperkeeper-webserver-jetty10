@@ -114,6 +114,12 @@ it from the server side.  Jetty's default value for this setting is 30 seconds.
 Note that Jetty will not automatically close the connection if the idle timeout
 is reached while Jetty is still actively processing a client request.
 
+### `websocket-closure-sync-timeout-seconds`
+
+This optional setting can be used to control how long Jetty server or client will
+wait on Websocket closure from the remote side. Either side will close the websocket
+session then wait for the other to report closure for the specified amount of time. The default value for this setting is 30 seconds. An info message with the request path will be logged if the timeout is hit.
+
 ### `ssl-host`
 
 This sets the hostname to listen on for _encrypted_ HTTPS traffic. If not

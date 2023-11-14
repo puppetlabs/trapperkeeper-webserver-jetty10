@@ -117,6 +117,8 @@
    (schema/optional-key :request-body-max-size)      schema/Int
    (schema/optional-key :so-linger-seconds)          schema/Int
    (schema/optional-key :idle-timeout-milliseconds)  schema/Int
+   (schema/optional-key
+         :websocket-closure-sync-timeout-seconds)    schema/Int
    (schema/optional-key :ssl-port)                   schema/Int
    (schema/optional-key :ssl-host)                   schema/Str
    (schema/optional-key :ssl-key)                    schema/Str

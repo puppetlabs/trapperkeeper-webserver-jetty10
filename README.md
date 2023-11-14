@@ -325,7 +325,7 @@ The `path` is the URL prefix at which the servlet will be registered.
 There is also a three argument version of the function which takes these arguments:
 `[servlet path options]`, where the first two arguments are the same as
 in the two argument version and options is a map containing four optional keys,
-`:server-id`, `:redirect-if-no-trailing-slash`, `normalize-request-uri`, and
+`:server-id`, `:redirect-if-no-trailing-slash`, `:normalize-request-uri`, and
 `:servlet-init-params`.
 
 As in `add-ring-handler`, `:server-id` specifies which server to add
@@ -414,6 +414,19 @@ For example, to provide a simple websockets echo service as `/wsecho`:
     (add-websocket-handler echo-handlers "/wsecho")
     context))
 ```
+
+There is also a three argument version of the function which takes these arguments:
+`[handler path options]`, where the first two arguments are the same as
+in the two argument version and options is a map containing three optional keys,`:redirect-if-no-trailing-slash`, `:normalize-request-uri`, and
+`:websocket-closure-sync-timeout-seconds`.
+
+As in `add-servlet-handler`, the value stored in `:redirect-if-no-trailing-slash` is a boolean indicating whether or not to redirect when a request is made to this handler without a trailing slash, just like with `add-servlet-handler`. Again, this defaults to false.
+
+The value stored in `:normalize-request-uri` is a boolean indicating whether
+or not the request URI should be normalized before it is made available to the
+handler.  See the [Request URI Normalization](#request-uri-normalization)
+section for more information on the normalization process.
+
 
 #### `add-war-handler`
 
