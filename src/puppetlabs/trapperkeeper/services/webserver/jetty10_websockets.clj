@@ -81,7 +81,8 @@
   [handlers :- WebsocketHandlers
    x509certs :- [X509Certificate]
    requestPath :- String
-   closureLatch :- CountDownLatch]
+   closureLatch :- CountDownLatch
+   maybe-closure-sync-timeout :- (schema/maybe schema/Int)]
   (let [{:keys [on-connect on-error on-text on-close on-bytes]
          :or {on-connect (partial no-handler :on-connect)
               on-error   (partial no-handler :on-error)
@@ -112,7 +113,7 @@
         (on-bytes this payload offset len))
       (awaitClosure []
         (try
-          (let [timeout-in-seconds 30]
+          (let [timeout-in-seconds (or maybe-closure-sync-timeout 30)]
             (when-not (.await closureLatch timeout-in-seconds TimeUnit/SECONDS)
               (log/info (i18n/trs "Timed out after awaiting closure of websocket from remote for {0} seconds at request path {1}." timeout-in-seconds requestPath))))
           (catch InterruptedException e
@@ -121,17 +122,17 @@
       (getRequestPath [] requestPath))))
 
 (schema/defn ^:always-validate proxy-ws-creator :- JettyWebSocketCreator
-  [handlers :- WebsocketHandlers]
+  [handlers :- WebsocketHandlers maybe-closure-sync-timeout :- (schema/maybe schema/Int)]
   (reify JettyWebSocketCreator
     (createWebSocket [_this ^JettyServerUpgradeRequest req ^JettyServerUpgradeResponse _res]
       (let [x509certs (vec (.. req (getCertificates)))
             requestPath (.. req (getRequestPath))
             ;; A simple gate to synchronize closure on server and client.
             closureLatch (CountDownLatch. 1)]
-        (proxy-ws-adapter handlers x509certs requestPath closureLatch)))))
+        (proxy-ws-adapter handlers x509certs requestPath closureLatch maybe-closure-sync-timeout)))))
 
 (schema/defn JettyWebSocketServletInstance :- JettyWebSocketServlet
-  [handlers]
+  [handlers maybe-closure-sync-timeout]
   (proxy [JettyWebSocketServlet] []
     (configure [^JettyWebSocketServletFactory factory]
-        (.setCreator factory (proxy-ws-creator handlers)))))
+        (.setCreator factory (proxy-ws-creator handlers maybe-closure-sync-timeout)))))

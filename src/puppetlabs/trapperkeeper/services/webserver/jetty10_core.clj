@@ -83,7 +83,8 @@
 (def CommonOptions
   {(schema/optional-key :server-id) schema/Keyword
    (schema/optional-key :redirect-if-no-trailing-slash) schema/Bool
-   (schema/optional-key :normalize-request-uri) schema/Bool})
+   (schema/optional-key :normalize-request-uri) schema/Bool
+   (schema/optional-key :websocket-closure-sync-timeout-seconds) (schema/maybe schema/Int)})
 
 (def ContextHandlerOptions
   (assoc CommonOptions (schema/optional-key :context-listeners) [ServletContextListener]
@@ -828,8 +829,9 @@
    handlers :- websockets/WebsocketHandlers
    path :- schema/Str
    enable-trailing-slash-redirect? :- schema/Bool
-   normalize-request-uri? :- schema/Bool]
-  (let [servlet (websockets/JettyWebSocketServletInstance handlers)
+   normalize-request-uri? :- schema/Bool
+   maybe-closure-sync-timeout :- (schema/maybe schema/Int)]
+  (let [servlet (websockets/JettyWebSocketServletInstance handlers maybe-closure-sync-timeout)
         ctxt-handler (doto (ServletContextHandler. ServletContextHandler/SESSIONS)
                        (.setContextPath path)
                        (.setServer (:server webserver-context)))
@@ -1145,13 +1147,15 @@
         state         (:state s)
         endpoint-map  {:type     :websocket}
         enable-redirect  (get options :redirect-if-no-trailing-slash false)
-        normalize-request-uri (get options :normalize-request-uri false)]
+        normalize-request-uri (get options :normalize-request-uri false)
+        maybe-closure-sync-timeout (get options :websocket-closure-sync-timeout-seconds nil)]
     (register-endpoint! state endpoint-map path)
     (add-websocket-handler s
                            handlers
                            path
                            enable-redirect
-                           normalize-request-uri)))
+                           normalize-request-uri
+                           maybe-closure-sync-timeout)))
 
 (schema/defn ^:always-validate add-servlet-handler!
   [context servlet path options :- ServletHandlerOptions]
