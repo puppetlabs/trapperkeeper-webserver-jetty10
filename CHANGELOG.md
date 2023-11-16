@@ -1,3 +1,7 @@
+## 1.0.3
+
+Added Websocket event trace logging, removed logback 1.2.x version pins, clj-parent now specifies 1.3.x dependencies.
+
 ## 1.0.2
 
 Updated to Jetty 10.0.18, added ClosureLatchSyncer interface Jetty WebSocketAdapter object to sync closure of websocket client and server.
