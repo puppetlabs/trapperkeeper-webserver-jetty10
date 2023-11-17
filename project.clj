@@ -79,9 +79,9 @@
                                           [org.clojure/tools.namespace]
                                           [compojure]
                                           [ring/ring-core]
-                                          [ch.qos.logback/logback-classic "1.2.12"]
-                                          [ch.qos.logback/logback-core "1.2.12"]
-                                          [ch.qos.logback/logback-access "1.2.12"]
+                                          [ch.qos.logback/logback-classic]
+                                          [ch.qos.logback/logback-core]
+                                          [ch.qos.logback/logback-access]
                                           [hato "0.9.0"]]}]
              :dev [:defaults
                    :pseudo-dev

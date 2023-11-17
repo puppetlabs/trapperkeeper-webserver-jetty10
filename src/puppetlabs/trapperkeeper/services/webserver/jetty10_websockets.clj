@@ -77,12 +77,20 @@
   (log/debug (i18n/trs "No handler defined for websocket event ''{0}'' with args: ''{1}''"
                        event args)))
 
+(def client-count (atom 0))
+(defn extract-CN-from-certs
+  [x509certs]
+  (when (not-empty x509certs)
+    (.getSubjectX500Principal (first x509certs))))
+
 (schema/defn ^:always-validate proxy-ws-adapter :- WebSocketAdapter
   [handlers :- WebsocketHandlers
    x509certs :- [X509Certificate]
    requestPath :- String
    closureLatch :- CountDownLatch]
-  (let [{:keys [on-connect on-error on-text on-close on-bytes]
+  (let [client-id (swap! client-count inc)
+        certname (extract-CN-from-certs x509certs)
+        {:keys [on-connect on-error on-text on-close on-bytes]
          :or {on-connect (partial no-handler :on-connect)
               on-error   (partial no-handler :on-error)
               on-text    (partial no-handler :on-text)
@@ -90,26 +98,41 @@
               on-bytes   (partial no-handler :on-bytes)}} handlers]
     (proxy [WebSocketAdapter CertGetter ClosureLatchSyncer] []
       (onWebSocketConnect [^Session session]
+        (log/tracef "%d on-connect certname:%s uri:%s" client-id certname requestPath)
         (let [^WebSocketAdapter this this]
           (proxy-super onWebSocketConnect session))
-        (on-connect this))
+        (let [on-connect-result (on-connect this)]
+          (log/tracef "%d exiting on-connect" client-id)
+          on-connect-result))
       (onWebSocketError [^Throwable e]
+        (log/tracef "%d on-error certname:%s uri:%s" client-id certname requestPath)
         (let [^WebSocketAdapter this this]
           (proxy-super onWebSocketError e))
-        (on-error this e))
+        (let [on-error-result (on-error this e)]
+          (log/tracef "%d exiting on-error" client-id)
+          on-error-result))
       (onWebSocketText [^String message]
+        (log/tracef "%d on-text certname:%s uri:%s" client-id certname requestPath)
         (let [^WebSocketAdapter this this]
           (proxy-super onWebSocketText message))
-        (on-text this message))
+        (let [on-text-result (on-text this message)]
+          (log/tracef "%d exiting on-text" client-id)
+          on-text-result))
       (onWebSocketClose [statusCode ^String reason]
+        (log/tracef "%d on-close certname:%s uri:%s" client-id certname requestPath)
         (let [^WebSocketAdapter this this]
           (proxy-super onWebSocketClose statusCode reason))
         (.countDown closureLatch)
-        (on-close this statusCode reason))
+        (let [on-close-result (on-close this statusCode reason)]
+          (log/tracef "%d exiting on-close" client-id)
+          on-close-result))
       (onWebSocketBinary [^bytes payload offset len]
+        (log/tracef "%d on-binary certname:%s uri:%s" client-id certname requestPath)
         (let [^WebSocketAdapter this this]
           (proxy-super onWebSocketBinary payload offset len))
-        (on-bytes this payload offset len))
+        (let [on-bytes-result (on-bytes this payload offset len)]
+          (log/tracef "%d exiting on-binary" client-id)
+          on-bytes-result))
       (awaitClosure []
         (try
           (let [timeout-in-seconds 30]
