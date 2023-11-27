@@ -35,22 +35,33 @@
   (-send! [s ws]
     (-> ^WebSocketAdapter ws .getRemote (.sendString ^String s))))
 
+(definterface ClosureLatchSyncer
+  (^Object awaitClosure []))
+
 (extend-protocol WebSocketProtocol
   WebSocketAdapter
   (send! [this msg]
     (-send! msg this))
   (close!
     ([this]
+     (log/trace "enter close no arg")
      ;; Close this side
-     (.. this (getSession) (close))
+     (.close (.getSession ^WebSocketAdapter this))
+     (log/trace "closed session")
      ;; Then wait for remote side to close
-     (.. this (awaitClosure)))
+     (.awaitClosure ^ClosureLatchSyncer this)
+     (log/trace "exit close no arg"))
     ([this code reason]
-     (.. this (getSession) (close code reason))
-     (.. this (awaitClosure))))
+     (log/trace "enter close arg code: %d reason \"%s\"" code reason)
+     (.close (.getSession ^WebSocketAdapter this) code reason)
+     (log/trace "closed session")
+     (.awaitClosure ^ClosureLatchSyncer this)
+     (log/trace "exit close no arg")))
   (disconnect [this]
-    (when-let [session (.getSession this)]
-     (.disconnect session)))
+    (log/trace "enter disconnect")
+    (when-let [^Session session (.getSession ^WebSocketAdapter this)]
+     (.disconnect session)
+     (log/trace "exit disconnect")))
   (remote-addr [this]
     (.. this (getSession) (getRemoteAddress)))
   (ssl? [this]
@@ -69,8 +80,6 @@
   (^Object getCerts [])
   (^String getRequestPath []))
 
-(definterface ClosureLatchSyncer
-  (^Object awaitClosure []))
 
 (defn no-handler
   [event & args]
@@ -106,8 +115,11 @@
           on-connect-result))
       (onWebSocketError [^Throwable e]
         (log/tracef "%d on-error certname:%s uri:%s" client-id certname requestPath)
-        (let [^WebSocketAdapter this this]
-          (proxy-super onWebSocketError e))
+        (try
+          (let [^WebSocketAdapter this this]
+              (proxy-super onWebSocketError e))
+          (catch Throwable inner-error
+            (log/error inner-error "Error while proxying to super for exception "e)))
         (let [on-error-result (on-error this e)]
           (log/tracef "%d exiting on-error" client-id)
           on-error-result))
@@ -145,6 +157,7 @@
 
 (schema/defn ^:always-validate proxy-ws-creator :- JettyWebSocketCreator
   [handlers :- WebsocketHandlers]
+  (log/trace "proxy-ws-creator")
   (reify JettyWebSocketCreator
     (createWebSocket [_this ^JettyServerUpgradeRequest req ^JettyServerUpgradeResponse _res]
       (let [x509certs (vec (.. req (getCertificates)))
