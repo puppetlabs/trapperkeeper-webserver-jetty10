@@ -1,5 +1,8 @@
 ## unreleased changes
 
+## 1.0.5
+* add the  [`Response`](https://www.eclipse.org/jetty/javadoc/jetty-10/org/eclipse/jetty/server/Response.html) under the `:response` key in the request for ring-handlers.
+
 ## 1.0.4
 * Added additional trace level logging to help diagnose issues
 * Removed some use of reflection by applying type metadata tags

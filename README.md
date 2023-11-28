@@ -84,6 +84,10 @@ Then your routes will be served at `/my-app/foo` and `my-app/bar`.
 You may specify `""` as the value for `path` if you are only registering a single
 handler and do not need to prefix the URL.
 
+In the handler, in the request passed to it, under the `:response` key is the
+[`Response`](https://www.eclipse.org/jetty/javadoc/jetty-10/org/eclipse/jetty/server/Response.html) that is used
+to deliver the response from the server.
+
 There is also a three argument version of this function which takes these arguments:
 `[handler path options]`. `options` is a map containing three optional keys.
 

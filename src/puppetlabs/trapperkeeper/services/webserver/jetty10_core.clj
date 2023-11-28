@@ -521,7 +521,8 @@
   [handler]
   (proxy [AbstractHandler] []
     (handle [_ ^Request base-request request response]
-      (let [request-map  (servlet/build-request-map request)
+      (let [request-map  (assoc (servlet/build-request-map request)
+                           :response response)
             response-map (handler request-map)]
         (when response-map
           (servlet/update-servlet-response response response-map)
