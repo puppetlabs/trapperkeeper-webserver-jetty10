@@ -29,9 +29,9 @@
            (org.eclipse.jetty.io ClientConnectionFactory$Info ClientConnector)
            (org.eclipse.jetty.jmx MBeanContainer)
            (org.eclipse.jetty.proxy ProxyServlet)
-           (org.eclipse.jetty.server AbstractConnectionFactory ConnectionFactory Handler HttpConfiguration
+           (org.eclipse.jetty.server AbstractConnectionFactory ConnectionFactory CustomRequestLog Handler HttpConfiguration
                                      HttpConnectionFactory Request
-                                     Server ServerConnector SymlinkAllowedResourceAliasChecker)
+                                     Server ServerConnector Slf4jRequestLogWriter SymlinkAllowedResourceAliasChecker)
            (org.eclipse.jetty.server.handler AbstractHandler ContextHandler
                                              ContextHandlerCollection HandlerCollection
                                              HandlerWrapper StatisticsHandler)
@@ -737,7 +737,8 @@
                                   options))
         ^Server s             (create-server webserver-context config)
         ^HandlerCollection hc (HandlerCollection.)
-         log-handler (config/maybe-init-log-handler options)]
+        ;; PE_37252 was (config/maybe-init-log-handler options)]
+         log-handler nil]
     (.setHandlers hc (into-array Handler [(:handlers webserver-context)]))
     (let [shutdown-timeout (* 1000 (:shutdown-timeout-seconds options config/default-shutdown-timeout-seconds))
           maybe-zipped (if (:gzip-enable options true)
@@ -755,8 +756,10 @@
           statistics-handler (if (or (nil? shutdown-timeout) (pos? shutdown-timeout))
                                (doto (StatisticsHandler.)
                                  (.setHandler maybe-logged))
-                               maybe-logged)]
+                               maybe-logged)
+          log-writer (Slf4jRequestLogWriter.)]
       (.setHandler s statistics-handler)
+      (.setRequestLog s (CustomRequestLog. log-writer CustomRequestLog/EXTENDED_NCSA_FORMAT))
       (when shutdown-timeout
         (log/info (i18n/trs "Server shutdown timeout set to {0} milliseconds" shutdown-timeout))
         (.setStopTimeout s shutdown-timeout))

@@ -1,5 +1,9 @@
 ## unreleased changes
 
+## 1.0.6
+* route logging through a SLF4J Custom logger as logback-access no longer works with jetty10. This is a work around until full featured logging is developed.
+
+
 ## 1.0.5
 * add the  [`Response`](https://www.eclipse.org/jetty/javadoc/jetty-10/org/eclipse/jetty/server/Response.html) under the `:response` key in the request for ring-handlers.
 
