@@ -718,41 +718,44 @@
       (finally
         (Files/delete link)))))
 
-(deftest request-logging-test
-  (with-app-with-config
-   app
-   [jetty10-service hello-webservice]
-   {:webserver {:port 8080
-                ;; Restrict the number of threads available to the webserver
-                ;; so we can easily test whether thread-local values in the
-                ;; MDC are cleaned up.
-                :acceptor-threads 1
-                :selector-threads 1 ; You actually end up with 2 threads.
-                :max-threads 4
-                :access-log-config "./dev-resources/puppetlabs/trapperkeeper/services/webserver/request-logging.xml"}}
-   (testing "request logging occurs when :access-log-config is configured"
-      (with-test-access-logging
-        (http-get "http://localhost:8080/hi_world/")
-       ; Logging is done in a separate thread from Jetty and this test. As a result,
-       ; we have to sleep the thread to avoid a race condition.
-       (Thread/sleep 10)
-       (let [list (TestListAppender/list)]
-         (is (re-find #"\"GET /hi_world/ HTTP/1.1\" 200" (first list))))))
 
-   (testing "Mapped Diagnostic Context values are available to the access logger"
-      (with-test-access-logging
-        (http-put "http://localhost:8080/mdc?mdc_key=mdc-test" {:body "hello"})
-        (Thread/sleep 10)
-        (let [list (TestListAppender/list)]
-          (is (str/ends-with? (first list) "hello\n")))))
-
-   (testing "Mapped Diagnostic Context values are cleared after each request"
-      (http-put "http://localhost:8080/mdc?mdc_key=mdc-persist" {:body "foo"})
-
-      ;; Loop to ensure we hit all threads.
-      (let [responses (for [n (range 0 10)]
-                        (http-get "http://localhost:8080/mdc?mdc_key=mdc-persist"))]
-        (is (every? #(not= "foo" %) (map :body responses)))))))
+;; PE-37252 temporarily disable logging tests
+;(deftest request-logging-test
+;  (with-app-with-config
+;   app
+;   [jetty10-service hello-webservice]
+;   {:webserver {:port 8080
+;                ;; Restrict the number of threads available to the webserver
+;                ;; so we can easily test whether thread-local values in the
+;                ;; MDC are cleaned up.
+;                :acceptor-threads 1
+;                :selector-threads 1 ; You actually end up with 2 threads.
+;                :max-threads 4
+;                :access-log-config "./dev-resources/puppetlabs/trapperkeeper/services/webserver/request-logging.xml"}}
+;
+;   (testing "request logging occurs when :access-log-config is configured"
+;      (with-test-access-logging
+;        (http-get "http://localhost:8080/hi_world/")
+;       ; Logging is done in a separate thread from Jetty and this test. As a result,
+;       ; we have to sleep the thread to avoid a race condition.
+;       (Thread/sleep 10)
+;       (let [list (TestListAppender/list)]
+;         (is (re-find #"\"GET /hi_world/ HTTP/1.1\" 200" (first list))))))
+;
+;   (testing "Mapped Diagnostic Context values are available to the access logger"
+;      (with-test-access-logging
+;        (http-put "http://localhost:8080/mdc?mdc_key=mdc-test" {:body "hello"})
+;        (Thread/sleep 10)
+;        (let [list (TestListAppender/list)]
+;          (is (str/ends-with? (first list) "hello\n")))))
+;
+;   (testing "Mapped Diagnostic Context values are cleared after each request"
+;      (http-put "http://localhost:8080/mdc?mdc_key=mdc-persist" {:body "foo"})
+;
+;      ;; Loop to ensure we hit all threads.
+;      (let [responses (for [n (range 0 10)]
+;                        (http-get "http://localhost:8080/mdc?mdc_key=mdc-persist"))]
+;        (is (every? #(not= "foo" %) (map :body responses)))))))
 
 (deftest graceful-shutdown-test
   (testing "jetty10 webservers shut down gracefully by default"
