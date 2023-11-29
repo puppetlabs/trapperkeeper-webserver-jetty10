@@ -1,5 +1,8 @@
 ## unreleased changes
 
+## 1.0.7
+* convert ring handler to using ServletContextHandler as previously used ContextHandler no longer supports the getRequestCharacterEncoding() function.
+
 ## 1.0.6
 * route logging through a SLF4J Custom logger as logback-access no longer works with jetty10. This is a work around until full featured logging is developed.
 

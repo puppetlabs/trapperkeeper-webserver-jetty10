@@ -519,7 +519,7 @@
 (defn- ring-handler
   "Returns an Jetty Handler implementation for the given Ring handler."
   [handler]
-  (proxy [AbstractHandler] []
+  (proxy [HandlerWrapper] []
     (handle [_ ^Request base-request request response]
       (let [request-map  (assoc (servlet/build-request-map request)
                            :response response)
@@ -817,13 +817,13 @@
    path :- schema/Str
    enable-trailing-slash-redirect? :- schema/Bool
    normalize-request-uri? :- schema/Bool]
-  (let [handler
-        (normalized-uri-helpers/handler-maybe-wrapped-with-normalized-uri
-         (ring-handler handler)
-         normalize-request-uri?)
+  (let [handler (normalized-uri-helpers/handler-maybe-wrapped-with-normalized-uri
+                 (ring-handler handler)
+                 normalize-request-uri?)
         path (if (= "" path) "/" path)
-        ctxt-handler (doto (ContextHandler. path)
-                       (.setHandler handler))]
+        ctxt-handler (doto (ServletContextHandler. ServletContextHandler/NO_SESSIONS)
+                       (.setContextPath path)
+                       (.insertHandler handler))]
     (add-handler webserver-context ctxt-handler enable-trailing-slash-redirect?)))
 
 (schema/defn ^:always-validate
