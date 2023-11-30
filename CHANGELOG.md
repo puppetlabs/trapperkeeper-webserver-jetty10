@@ -1,5 +1,8 @@
 ## unreleased changes
 
+## 1.0.8
+* set default encoding for ring handler responses to UTF-8
+
 ## 1.0.7
 * convert ring handler to using ServletContextHandler as previously used ContextHandler no longer supports the getRequestCharacterEncoding() function.
 
