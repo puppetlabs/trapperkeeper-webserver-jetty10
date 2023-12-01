@@ -69,6 +69,7 @@
       (update-in [:https :protocols] (fnil identity default-protocols))
       (update-in [:https :client-auth] (fnil identity default-client-auth))
       (update-in [:https :allow-renegotiation] (fnil identity default-allow-renegotiation))
+      (update-in [:https :sni-required] (fnil identity default-sni-required))
       (update-in [:https :ssl-crl-path] identity)))
 
 (deftest process-config-http-test
@@ -220,6 +221,26 @@
              {:https {:host             "foo.local"
                       :port             8001
                       :allow-renegotiation false}})))
+
+    (is (= (munge-actual-https-config
+             (merge (valid-ssl-pem-config)
+                    {:ssl-host             "foo.local"
+                     :ssl-port             8001
+                     :sni-required true}))
+           (munge-expected-https-config
+             {:https {:host             "foo.local"
+                      :port             8001
+                      :sni-required true}})))
+
+    (is (= (munge-actual-https-config
+             (merge (valid-ssl-pem-config)
+                    {:ssl-host             "foo.local"
+                     :ssl-port             8001
+                     :sni-required false}))
+           (munge-expected-https-config
+             {:https {:host             "foo.local"
+                      :port             8001
+                      :sni-required false}})))
 
     (is (= (munge-actual-https-config
              (merge (valid-ssl-pem-config)
