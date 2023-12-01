@@ -1,5 +1,8 @@
 ## unreleased changes
 
+## 1.0.9
+* add optional sni-required configuration setting
+
 ## 1.0.8
 * set default encoding for ring handler responses to UTF-8
 
