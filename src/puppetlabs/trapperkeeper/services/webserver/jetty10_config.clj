@@ -83,6 +83,7 @@
 (def default-protocols ["TLSv1.3" "TLSv1.2"])
 (def default-client-auth :need)
 (def default-allow-renegotiation false)
+(def default-sni-required false)
 
 ;;;
 ;;; JMX
@@ -140,7 +141,8 @@
    (schema/optional-key :access-log-config)          schema/Str
    (schema/optional-key :shutdown-timeout-seconds)   schema/Int
    (schema/optional-key :post-config-script)         schema/Str
-   (schema/optional-key :allow-renegotiation)        schema/Bool})
+   (schema/optional-key :allow-renegotiation)        schema/Bool
+   (schema/optional-key :sni-required)               schema/Bool})
 
 (def MultiWebserverRawConfigUnvalidated
   {schema/Keyword  WebserverRawConfig})
@@ -192,12 +194,13 @@
           :selector-threads (schema/maybe schema/Int)}))
 
 (def WebserverSslContextFactory
-  {:keystore-config                    WebserverSslKeystoreConfig
-   :client-auth                        WebserverSslClientAuth
-   (schema/optional-key :ssl-crl-path) (schema/maybe schema/Str)
-   :cipher-suites                      [schema/Str]
-   :protocols                          (schema/maybe [schema/Str])
-   (schema/optional-key :allow-renegotiation)     (schema/maybe schema/Bool)})
+  {:keystore-config                           WebserverSslKeystoreConfig
+   :client-auth                               WebserverSslClientAuth
+   (schema/optional-key :ssl-crl-path)        (schema/maybe schema/Str)
+   :cipher-suites                             [schema/Str]
+   :protocols                                 (schema/maybe [schema/Str])
+   (schema/optional-key :allow-renegotiation) (schema/maybe schema/Bool)
+   (schema/optional-key :sni-required)        (schema/maybe schema/Bool)})
 
 (def WebserverClientSslContextFactory
   (dissoc WebserverSslContextFactory :client-auth))
@@ -418,7 +421,9 @@
             :client-auth             (get-client-auth! config)
             :ssl-crl-path            (get-ssl-crl-path! config)
             :allow-renegotiation     (get config :allow-renegotiation
-                                         default-allow-renegotiation)})))
+                                         default-allow-renegotiation)
+            :sni-required            (or (:sni-required config)
+                                         default-sni-required)})))
 
 (schema/defn ^:always-validate
   maybe-add-http-connector :- {(schema/optional-key :http) WebserverConnector

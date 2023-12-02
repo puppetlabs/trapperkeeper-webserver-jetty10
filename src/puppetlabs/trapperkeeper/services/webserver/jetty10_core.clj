@@ -254,7 +254,7 @@
 (schema/defn ^:always-validate
   ssl-context-server-factory :- SslContextFactory$Server
   "Creates a new SslContextFactory instance from a map of SSL config options."
-  [{:keys [keystore-config client-auth ssl-crl-path cipher-suites protocols allow-renegotiation]}
+  [{:keys [keystore-config client-auth ssl-crl-path cipher-suites protocols allow-renegotiation sni-required]}
    :- config/WebserverSslContextFactory]
   (when (some #(= "sslv3" %) (map str/lower-case protocols))
     (log/warn (i18n/trs "`ssl-protocols` contains SSLv3, a protocol with known vulnerabilities; ignoring")))
@@ -293,6 +293,9 @@
     (if allow-renegotiation
       (.setRenegotiationAllowed context true)
       (.setRenegotiationAllowed context false))
+    (if sni-required
+      (.setSniRequired context true)
+      (.setSniRequired context false))
     (when ssl-crl-path
       (.setCrlPath context ssl-crl-path)
       ; .setValidatePeerCerts needs to be called with a value of 'true' in
