@@ -825,7 +825,6 @@
                  normalize-request-uri?)
         path (if (= "" path) "/" path)
         ctxt-handler (doto (ServletContextHandler. ServletContextHandler/NO_SESSIONS)
-                       (.setDefaultResponseCharacterEncoding "UTF-8")
                        (.setContextPath path)
                        (.insertHandler handler))]
     (add-handler webserver-context ctxt-handler enable-trailing-slash-redirect?)))
