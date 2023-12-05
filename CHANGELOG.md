@@ -1,5 +1,14 @@
 ## unreleased changes
 
+## 1.0.11
+- Remove default character encoding added in 1.0.8; add tests demonstrating overriding content-type
+- add customized SecureRequestCustomizer that makes SNI not
+required, and turn off host checking for SNI. This allows localhost
+connections to a server that doesn't have localhost in its cert specification.
+
+## 1.0.10
+- Empty tag
+
 ## 1.0.9
 * add optional sni-required configuration setting
 
