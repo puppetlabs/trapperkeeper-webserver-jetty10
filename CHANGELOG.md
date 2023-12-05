@@ -1,5 +1,8 @@
 ## unreleased changes
 
+## 1.0.10
+- Remove default character encoding added in 1.0.8; add tests demonstrating overriding content-type
+
 ## 1.0.9
 * add optional sni-required configuration setting
 
