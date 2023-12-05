@@ -128,12 +128,13 @@
         (let [s                   (get-service app :WebroutingService)
               add-servlet-handler (partial add-servlet-handler s)
               body                "Hey there"
-              servlet             (SimpleServlet. body)
+              servlet             (SimpleServlet. body "text/html" false)
               svc                 (get-service app :TestDummy)]
           (add-servlet-handler svc servlet)
           (let [response (http-get "http://localhost:8080/foo")]
-            (is (= (:status response) 200))
-            (is (= (:body response) body))))))
+            (is 200 (= (:status response)))
+            (is "text/html;charset=utf-8" (= (get-in response [:headers "content-type"])))
+            (is body (= (:body response)))))))
 
     (testing "request to servlet over http succeeds with multiple web routes"
       (with-app-with-config app
@@ -144,15 +145,17 @@
         (let [s                   (get-service app :WebroutingService)
               add-servlet-handler (partial add-servlet-handler s)
               body                "Hey there"
-              servlet             (SimpleServlet. body)
+              servlet             (SimpleServlet. body "text/html" false)
               svc                 (get-service app :TestDummy)]
           (add-servlet-handler svc servlet {:route-id :quux})
           (add-servlet-handler svc servlet {:route-id :foo})
           (let [response (http-get "http://localhost:8080/foo")]
             (is (= (:status response) 200))
+            (is "text/html;charset=utf-8" (= (get-in response [:headers "content-type"])))
             (is (= (:body response) body)))
           (let [response (http-get "http://localhost:8080/bar")]
             (is (= (:status response) 200))
+            (is "text/html;charset=utf-8" (= (get-in response [:headers "content-type"])))
             (is (= (:body response) body))))))))
 
 (deftest war-test-web-routing

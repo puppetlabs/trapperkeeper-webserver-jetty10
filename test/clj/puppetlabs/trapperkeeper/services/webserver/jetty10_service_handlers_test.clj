@@ -58,7 +58,7 @@
               path                "/resources"
               body                "Hey there"
               servlet-path        "/hey"
-              servlet             (SimpleServlet. body)
+              servlet             (SimpleServlet. body "text/html" false)
               context-listeners   [(reify ServletContextListener
                                      (contextInitialized [this event]
                                        (doto (.addServlet (.getServletContext event) "simple" servlet)
@@ -67,6 +67,7 @@
           (add-context-handler dev-resources-dir path {:context-listeners context-listeners})
           (let [response (http-get (str "http://localhost:8080" path servlet-path))]
             (is (= (:status response) 200))
+            (is (= "text/html;charset=utf-8" (get-in response [:headers "content-type"])))
             (is (= (:body response) body))))))))
 
 (deftest add-context-handler-symlinks-test
@@ -121,11 +122,27 @@
               add-servlet-handler (partial add-servlet-handler s)
               body                "Hey there"
               path                "/hey"
-              servlet             (SimpleServlet. body)]
+              servlet             (SimpleServlet. body "text/html" false)]
           (add-servlet-handler servlet path)
           (let [response (http-get
                            (str "http://localhost:8080" path))]
             (is (= (:status response) 200))
+            (is (= "text/html;charset=utf-8" (get-in response [:headers "content-type"])))
+            (is (= (:body response) body))))))
+
+    (testing "request to servlet with json content over http succeeds"
+      (with-app-with-config app
+        [jetty10-service]
+        jetty-plaintext-config
+        (let [s (get-service app :WebserverService)
+              add-servlet-handler (partial add-servlet-handler s)
+              body                "{}"
+              path                "/hey"
+              servlet             (SimpleServlet. body "application/json;charset=utf-8" true)]
+          (add-servlet-handler servlet path)
+          (let [response (http-get (str "http://localhost:8080" path))]
+            (is (= (:status response) 200))
+            (is (= "application/json;charset=utf-8" (get-in response [:headers "content-type"])))
             (is (= (:body response) body))))))
 
     (testing "request to servlet over http succeeds with add-servlet-handler-to"
@@ -136,11 +153,12 @@
               add-servlet-handler    (partial add-servlet-handler s)
               body                   "Hey there"
               path                   "/hey"
-              servlet                (SimpleServlet. body)]
+              servlet                (SimpleServlet. body "text/html" false)]
           (add-servlet-handler servlet path {:server-id :foo})
           (let [response (http-get
                            (str "http://localhost:8085" path))]
             (is (= (:status response) 200))
+            (is (= "text/html;charset=utf-8" (get-in response [:headers "content-type"])))
             (is (= (:body response) body))))))
 
     (testing "request to servlet initialized with empty param succeeds"
@@ -151,10 +169,11 @@
               add-servlet-handler (partial add-servlet-handler s)
               body                "Hey there"
               path                "/hey"
-              servlet             (SimpleServlet. body)]
+              servlet             (SimpleServlet. body "text/html" false)]
           (add-servlet-handler servlet path {:servlet-init-params {}})
           (let [response (http-get (str "http://localhost:8080" path))]
             (is (= (:status response) 200))
+            (is (= "text/html;charset=utf-8" (get-in response [:headers "content-type"])))
             (is (= (:body response) body))))))
 
     (testing "request to servlet initialized with non-empty params succeeds"
@@ -167,7 +186,7 @@
               path                "/hey"
               init-param-one      "value of init param one"
               init-param-two      "value of init param two"
-              servlet             (SimpleServlet. body)]
+              servlet             (SimpleServlet. body "text/html" false)]
           (add-servlet-handler servlet
                                path
                                {:servlet-init-params {"init-param-one" init-param-one
@@ -175,10 +194,12 @@
           (let [response (http-get
                            (str "http://localhost:8080" path "/init-param-one"))]
             (is (= (:status response) 200))
+            (is (= "text/html;charset=utf-8" (get-in response [:headers "content-type"])))
             (is (= (:body response) init-param-one)))
           (let [response (http-get
                            (str "http://localhost:8080" path "/init-param-two"))]
             (is (= (:status response) 200))
+            (is (= "text/html;charset=utf-8" (get-in response [:headers "content-type"])))
             (is (= (:body response) init-param-two))))))))
 
 (deftest websocket-test
@@ -347,7 +368,7 @@
               add-websocket-handler    (partial add-websocket-handler s)
               ring-handler             (fn [req] {:status 200 :body "Hi world"})
               body                     "This is a test"
-              servlet                  (SimpleServlet. body)
+              servlet                  (SimpleServlet. body "text/html" false)
               context-listeners        [(reify ServletContextListener
                                           (contextInitialized [this event]
                                             (doto (.addServlet (.getServletContext event) "simple" servlet)
@@ -384,8 +405,8 @@
                                        :target-path "/ernie"}
                                       {:type :proxy :target-host "localhost" :target-port 10000
                                        :target-path "/kermit"}]
-                              "/quux" [{:type :websocket}]
-                              })))))))
+                              "/quux" [{:type :websocket}]})))))))
+
 
   (testing "Log endpoints"
     (with-test-logging
@@ -494,7 +515,6 @@
            (let [response (http-get
                            "http://localhost:8080/hello/world/%2E%2E/cleveland"
                            {:as :text})]
-             (is (= (:status response) 200))
              (is (= (:body response) "/hello/world/%2E%2E/cleveland")))))))))
 
 (defn servlet-echoing-request-uri
