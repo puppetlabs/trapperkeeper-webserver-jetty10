@@ -31,7 +31,7 @@
            (org.eclipse.jetty.proxy ProxyServlet)
            (org.eclipse.jetty.server AbstractConnectionFactory ConnectionFactory CustomRequestLog Handler HttpConfiguration
                                      HttpConnectionFactory Request
-                                     Server ServerConnector Slf4jRequestLogWriter SymlinkAllowedResourceAliasChecker)
+                                     SecureRequestCustomizer Server ServerConnector Slf4jRequestLogWriter SymlinkAllowedResourceAliasChecker)
            (org.eclipse.jetty.server.handler AbstractHandler ContextHandler
                                              ContextHandlerCollection HandlerCollection
                                              HandlerWrapper StatisticsHandler)
@@ -322,7 +322,10 @@
 
 (defn- http-configuration
   [request-header-size]
-  (let [http-config (doto (HttpConfiguration.)
+  (let [customizer (SecureRequestCustomizer. false)
+        _ (.setSniRequired customizer false)
+        http-config (doto (HttpConfiguration.)
+                      (.addCustomizer customizer)
                       (.setSendDateHeader true)
                       (.setSendServerVersion false)
                       ;; LEGACY uri compliance mode that models Jetty-9.4 behavior by allowing
