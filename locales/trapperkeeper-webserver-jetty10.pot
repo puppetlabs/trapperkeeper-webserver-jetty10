@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: com.puppetlabs.trapperkeeper_webserver_jetty10 \n"
-"X-Git-Ref: b263df1714b9163b0f36e4c1a96a38a2372b4cd0\n"
+"X-Git-Ref: 9044107fb020a56888b4851ca7069c82ca51e219\n"
 "Report-Msgid-Bugs-To: docs@puppet.com\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -88,7 +88,19 @@ msgid ""
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_config.clj
+msgid "Found access-log file at {0}"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_config.clj
 msgid "Enabling access logger using file {0}"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_config.clj
+msgid "Access logging file not found at {0}"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_config.clj
+msgid "Access log configuration not specified"
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_config.clj
@@ -161,6 +173,14 @@ msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
 msgid "Web server shutdown"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
+msgid "Using specified access logging"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
+msgid "Using CustomRequestLog using extended NCSA format"
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_core.clj
