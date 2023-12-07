@@ -1,4 +1,5 @@
 ## unreleased changes
+- ensure that absent log-access-configuration files don't prevent application from functioning correctly
 
 ## 1.0.12
 - Reenable logback-access logging.  This uses the "setRequestLog" function in jetty10 which guarantees that the request/response is settled prior to doing the logging.
