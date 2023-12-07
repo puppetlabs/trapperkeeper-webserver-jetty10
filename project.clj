@@ -35,6 +35,9 @@
                  [prismatic/schema]
                  [ring/ring-servlet]
                  [ring/ring-codec]
+                 [ch.qos.logback/logback-access]
+                 [ch.qos.logback/logback-core]
+                 [ch.qos.logback/logback-classic]
 
                  [puppetlabs/ssl-utils]
                  [puppetlabs/kitchensink]
@@ -79,9 +82,6 @@
                                           [org.clojure/tools.namespace]
                                           [compojure]
                                           [ring/ring-core]
-                                          [ch.qos.logback/logback-classic]
-                                          [ch.qos.logback/logback-core]
-                                          [ch.qos.logback/logback-access]
                                           [hato "0.9.0"]]}]
              :dev [:defaults
                    :pseudo-dev

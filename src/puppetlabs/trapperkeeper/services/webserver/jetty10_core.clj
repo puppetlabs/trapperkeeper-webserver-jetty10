@@ -13,9 +13,10 @@
             [ring.util.servlet :as servlet]
             [schema.core :as schema])
 
-  (:import (clojure.lang Atom)
+  (:import (ch.qos.logback.access.jetty RequestLogImpl)
+           (clojure.lang Atom)
            (com.puppetlabs.ssl_utils SSLUtils)
-           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils InternalSslContextFactory)
+           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils InternalSslContextFactory MDCRequestLogHandler)
            (java.lang.management ManagementFactory)
            (java.net URI)
            (java.security Security)
@@ -456,7 +457,8 @@
                                                    [:keystore-config :client-auth
                                                     :ssl-crl-path :cipher-suites
                                                     :allow-renegotiation
-                                                    :protocols]))
+                                                    :protocols
+                                                    :sni-required]))
             ssl-ctx-client-factory (ssl-context-client-factory
                                       (select-keys https
                                                    [:keystore-config
@@ -743,8 +745,7 @@
                                   options))
         ^Server s             (create-server webserver-context config)
         ^HandlerCollection hc (HandlerCollection.)
-        ;; PE_37252 was (config/maybe-init-log-handler options)]
-         log-handler nil]
+        logger (config/maybe-init-log-handler options)]
     (.setHandlers hc (into-array Handler [(:handlers webserver-context)]))
     (let [shutdown-timeout (* 1000 (:shutdown-timeout-seconds options config/default-shutdown-timeout-seconds))
           maybe-zipped (if (:gzip-enable options true)
@@ -756,16 +757,17 @@
                                    maybe-zipped
                                    max-size)
                                   maybe-zipped)
-          maybe-logged (if log-handler
-                         (doto log-handler (.setHandler maybe-size-restricted))
+          maybe-logged (if logger
+                         (doto (MDCRequestLogHandler.)
+                           (.setHandler maybe-size-restricted))
                          maybe-size-restricted)
           statistics-handler (if (or (nil? shutdown-timeout) (pos? shutdown-timeout))
                                (doto (StatisticsHandler.)
                                  (.setHandler maybe-logged))
-                               maybe-logged)
-          log-writer (Slf4jRequestLogWriter.)]
+                               maybe-logged)]
       (.setHandler s statistics-handler)
-      (.setRequestLog s (CustomRequestLog. log-writer CustomRequestLog/EXTENDED_NCSA_FORMAT))
+      (when logger
+        (.setRequestLog s logger))
       (when shutdown-timeout
         (log/info (i18n/trs "Server shutdown timeout set to {0} milliseconds" shutdown-timeout))
         (.setStopTimeout s shutdown-timeout))

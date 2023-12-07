@@ -9,15 +9,14 @@
   (:import (ch.qos.logback.access.jetty RequestLogImpl)
            (ch.qos.logback.core CoreConstants)
            (com.puppetlabs.ssl_utils SSLUtils)
-           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils MDCAccessLogConverter MDCRequestLogHandler)
+           (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils MDCAccessLogConverter ModifiedRequestLogImpl)
            (java.io FileInputStream)
            (java.lang.reflect InvocationTargetException)
            (java.security KeyStore)
            (java.util HashMap)
            (org.codehaus.commons.compiler CompileException)
            (org.codehaus.janino ScriptEvaluator)
-           (org.eclipse.jetty.server Server)
-           (org.eclipse.jetty.server.handler RequestLogHandler)))
+           (org.eclipse.jetty.server Server)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Constants / Defaults
@@ -471,22 +470,21 @@
     result))
 
 (schema/defn ^:always-validate
-  init-log-handler :- RequestLogHandler
+  init-log-handler :- RequestLogImpl
   [config :- WebserverRawConfig]
 
-  (let [handler (MDCRequestLogHandler.)
-        pattern-rules (HashMap.)
-        logger (RequestLogImpl.)]
+  (let [pattern-rules (HashMap.)
+        logger (ModifiedRequestLogImpl.)]
 
     (doseq [pattern ["X" "mdc"]]
       (.put pattern-rules
             pattern
             (.getName MDCAccessLogConverter)))
     (.putObject logger CoreConstants/PATTERN_RULE_REGISTRY pattern-rules)
+    (log/info (i18n/trs "Enabling access logger using file {0}" (:access-log-config config)))
     (.setFileName logger (:access-log-config config))
     (.setQuiet logger true)
-    (.setRequestLog handler logger)
-    handler))
+    logger))
 
 (defn maybe-init-log-handler
   [config]

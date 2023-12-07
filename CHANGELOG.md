@@ -1,5 +1,8 @@
 ## unreleased changes
 
+## 1.0.12
+- Reenable logback-access logging.  This uses the "setRequestLog" function in jetty10 which guarantees that the request/response is settled prior to doing the logging.
+
 ## 1.0.11
 - Remove default character encoding added in 1.0.8; add tests demonstrating overriding content-type
 - add customized SecureRequestCustomizer that makes SNI not
