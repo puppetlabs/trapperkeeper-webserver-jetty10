@@ -1,9 +1,9 @@
 package com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils;
 
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.security.CertificateUtils;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.security.cert.CRL;
@@ -15,7 +15,7 @@ public class InternalSslContextFactory extends SslContextFactory.Server {
     private static int maxTries = 25;
     private static int sleepInMillisecondsBetweenTries = 100;
     private static final Logger LOG =
-            Log.getLogger(InternalSslContextFactory.class);
+            LoggerFactory.getLogger(InternalSslContextFactory.class);
     private static Consumer<SslContextFactory> consumer = sslContextFactory
             -> {};
 
