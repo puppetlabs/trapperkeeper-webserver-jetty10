@@ -13,8 +13,7 @@
             [ring.util.servlet :as servlet]
             [schema.core :as schema])
 
-  (:import (ch.qos.logback.access.jetty RequestLogImpl)
-           (clojure.lang Atom)
+  (:import (clojure.lang Atom)
            (com.puppetlabs.ssl_utils SSLUtils)
            (com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils InternalSslContextFactory MDCRequestLogHandler)
            (java.lang.management ManagementFactory)
@@ -33,7 +32,7 @@
            (org.eclipse.jetty.server AbstractConnectionFactory ConnectionFactory CustomRequestLog Handler HttpConfiguration
                                      HttpConnectionFactory Request
                                      SecureRequestCustomizer Server ServerConnector Slf4jRequestLogWriter SymlinkAllowedResourceAliasChecker)
-           (org.eclipse.jetty.server.handler AbstractHandler ContextHandler
+           (org.eclipse.jetty.server.handler ContextHandler
                                              ContextHandlerCollection HandlerCollection
                                              HandlerWrapper StatisticsHandler)
            (org.eclipse.jetty.server.handler.gzip GzipHandler)
@@ -766,8 +765,13 @@
                                  (.setHandler maybe-logged))
                                maybe-logged)]
       (.setHandler s statistics-handler)
-      (when logger
-        (.setRequestLog s logger))
+      (if logger
+        (do
+          (log/info (i18n/trs "Using specified access logging"))
+          (.setRequestLog s logger))
+        (do
+          (log/info (i18n/trs "Using CustomRequestLog using extended NCSA format"))
+          (.setRequestLog s (CustomRequestLog. (Slf4jRequestLogWriter.) CustomRequestLog/EXTENDED_NCSA_FORMAT))))
       (when shutdown-timeout
         (log/info (i18n/trs "Server shutdown timeout set to {0} milliseconds" shutdown-timeout))
         (.setStopTimeout s shutdown-timeout))
