@@ -3,6 +3,7 @@ package com.puppetlabs.trapperkeeper.services.webserver.jetty10.utils;
 import java.io.IOException;
 import java.util.Map;
 
+import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,7 +34,19 @@ public class MDCRequestLogHandler extends RequestLogHandler {
     Map<String, String> savedContext = MDC.getCopyOfContextMap();
 
     try {
-      super.handle(target, baseRequest, request, response);
+      if (baseRequest.getDispatcherType() == DispatcherType.REQUEST) {
+
+        // replace the behavior in the requestLogHandler (instead of calling super) as there may not
+        // be a requestLog set here to delegate to
+        if (this.getRequestLog() != null) {
+          baseRequest.getHttpChannel().addRequestLog(this.getRequestLog());
+        }
+      }
+
+      // this normally happens in the super call, replicated here.
+      if (this.getHandler() != null) {
+        this.getHandler().handle(target, baseRequest, request, response);
+      }
 
       // Tag request with a copy of the MDC so that values are accessible if
       // logging happens in a separate thread.

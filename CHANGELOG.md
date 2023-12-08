@@ -1,4 +1,9 @@
 ## unreleased changes
+## 1.0.14
+- ensure null `requestLog` in the MDCRequestHandler does not cause a null dereference.
+- enable logging for access log configuration
+
+## 1.0.13
 - ensure that absent log-access-configuration files don't prevent application from functioning correctly
 
 ## 1.0.12
