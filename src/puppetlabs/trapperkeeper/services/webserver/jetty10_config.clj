@@ -487,7 +487,7 @@
           (.putObject logger CoreConstants/PATTERN_RULE_REGISTRY pattern-rules)
           (log/info (i18n/trs "Enabling access logger using file {0}" filename))
           (.setFileName logger filename)
-          (.setQuiet logger true)
+          (.setQuiet logger false)
           logger))
       (log/info (i18n/trs "Access logging file not found at {0}" filename)))))
 
