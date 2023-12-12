@@ -1,4 +1,8 @@
 ## unreleased changes
+
+## 1.0.15
+- cleans up accidental hard dependency on hato library in project.clj, hato is now only a dev dependency.
+
 ## 1.0.14
 - ensure null `requestLog` in the MDCRequestHandler does not cause a null dereference.
 - enable logging for access log configuration

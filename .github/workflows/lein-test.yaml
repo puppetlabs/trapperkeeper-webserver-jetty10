@@ -37,5 +37,5 @@ jobs:
           zprint: latest                # zprint
       - name: Run lein tests with dev test profile
         run: lein with-profile dev test
-      - name: Run lein tests with pseudo-dev, fips profiles
-        run: lein with-profile pseudo-dev,fips test
+      - name: Run lein tests with fips profile
+        run: lein with-profile fips test
