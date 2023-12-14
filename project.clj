@@ -66,57 +66,45 @@
 
   :test-paths ["test/clj"]
 
-  :profiles {:dev {:source-paths ["examples/multiserver_app/src"
-                                   "examples/ring_app/src"
-                                   "examples/servlet_app/src/clj"
-                                   "examples/war_app/src"
-                                   "examples/webrouting_app/src"]
-                   :java-source-paths ["examples/servlet_app/src/java"
-                                       "test/java"]
-                   :resource-paths ["dev-resources"]
-                   :jvm-opts ["-Djava.util.logging.config.file=dev-resources/logging.properties"]
-                   :dependencies [[puppetlabs/http-client]
-                                  [puppetlabs/kitchensink nil :classifier "test"]
-                                  [puppetlabs/trapperkeeper nil :classifier "test"]
-                                  [org.clojure/tools.namespace]
-                                  [compojure]
-                                  [ring/ring-core]
-                                  [org.bouncycastle/bcpkix-jdk18on]
-                                  [hato "0.9.0"]]}
+  :profiles {:shared {:source-paths ["examples/multiserver_app/src"
+                                     "examples/ring_app/src"
+                                     "examples/servlet_app/src/clj"
+                                     "examples/war_app/src"
+                                     "examples/webrouting_app/src"]
+                      :java-source-paths ["examples/servlet_app/src/java"
+                                          "test/java"]
+                      :resource-paths ["dev-resources"]
+                      :dependencies [[puppetlabs/http-client]
+                                     [puppetlabs/kitchensink nil :classifier "test"]
+                                     [puppetlabs/trapperkeeper nil :classifier "test"]
+                                     [org.clojure/tools.namespace]
+                                     [compojure]
+                                     [ring/ring-core]
+                                     [hato "0.9.0"]]}
+             :dev-only {:dependencies [[org.bouncycastle/bcpkix-jdk18on]]
+                        :jvm-opts ["-Djava.util.logging.config.file=dev-resources/logging.properties"]}
+             :dev [:shared :dev-only]
+             :fips-only {:dependencies [[org.bouncycastle/bcpkix-fips]
+                                        [org.bouncycastle/bc-fips]
+                                        [org.bouncycastle/bctls-fips]]
+                         ;; this only ensures that we run with the proper profiles
+                         ;; during testing. This JVM opt will be set in the puppet module
+                         ;; that sets up the JVM classpaths during installation.
+                         :jvm-opts ~(let [version (System/getProperty "java.version")
+                                          [major minor _] (clojure.string/split version #"\.")
+                                          unsupported-ex (ex-info "Unsupported major Java version. Expects 11 or 17."
+                                                                  {:major major
+                                                                   :minor minor})]
+                                      (condp = (java.lang.Integer/parseInt major)
+                                        11 ["-Djava.security.properties==dev-resources/jdk11-fips-security"]
+                                        17 ["-Djava.security.properties==dev-resources/jdk17-fips-security"]
+                                        (throw unsupported-ex)))}
+             :fips [:shared :fips-only]
 
              ;; per https://github.com/technomancy/leiningen/issues/1907
              ;; the provided profile is necessary for lein jar / lein install
              :provided {:dependencies [[org.bouncycastle/bcpkix-jdk18on]]
                         :resource-paths ["dev-resources"]}
-
-             :fips {:source-paths ["examples/multiserver_app/src"
-                                   "examples/ring_app/src"
-                                   "examples/servlet_app/src/clj"
-                                   "examples/war_app/src"
-                                   "examples/webrouting_app/src"]
-                    :java-source-paths ["examples/servlet_app/src/java"
-                                        "test/java"]
-                    :resource-paths ["dev-resources"]
-                    :dependencies [[puppetlabs/http-client]
-                                   [puppetlabs/kitchensink nil :classifier "test"]
-                                   [puppetlabs/trapperkeeper nil :classifier "test"]
-                                   [org.bouncycastle/bcpkix-fips]
-                                   [org.bouncycastle/bc-fips]
-                                   [org.bouncycastle/bctls-fips]
-                                   [hato "0.9.0"]]
-                    :exclusions [[org.bouncycastle/bcpkix-jdk18on]]
-                    ;; this only ensures that we run with the proper profiles
-                    ;; during testing. This JVM opt will be set in the puppet module
-                    ;; that sets up the JVM classpaths during installation.
-                    :jvm-opts ~(let [version (System/getProperty "java.version")
-                                     [major minor _] (clojure.string/split version #"\.")
-                                     unsupported-ex (ex-info "Unsupported major Java version. Expects 11 or 17."
-                                                             {:major major
-                                                              :minor minor})]
-                                 (condp = (java.lang.Integer/parseInt major)
-                                   11 ["-Djava.security.properties==dev-resources/jdk11-fips-security"]
-                                   17 ["-Djava.security.properties==dev-resources/jdk17-fips-security"]
-                                   (throw unsupported-ex)))}
 
              :testutils {:source-paths ^:replace ["test/clj"]
                          :java-source-paths ^:replace ["test/java"]}}

@@ -5,10 +5,10 @@ on:
   push:
     branches:
       - main
-    paths: ['src/**','test/**']
+    paths: ['src/**','test/**', 'project.clj']
   pull_request:
     types: [opened, reopened, edited, synchronize]
-    paths: ['src/**','test/**']
+    paths: ['src/**','test/**', 'project.clj']
 
 jobs:
   run-lein-tests:
