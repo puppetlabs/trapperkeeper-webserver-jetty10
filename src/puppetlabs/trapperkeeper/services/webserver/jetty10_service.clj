@@ -1,7 +1,7 @@
 (ns puppetlabs.trapperkeeper.services.webserver.jetty10-service
   (:require
+    [clojure.pprint :refer [pprint]]
     [clojure.tools.logging :as log]
-
     [puppetlabs.i18n.core :as i18n]
     [puppetlabs.trapperkeeper.config :as tk-config]
     [puppetlabs.trapperkeeper.core :refer [defservice]]
@@ -49,7 +49,22 @@
                           ;; Here for backward compatibility with existing projects
                           (tk-config/get-in-config config-service [:jetty])
                           {})
+               _ (log/debug (i18n/trs "Jetty server(s) starting with config: {0}" config))
                started-context (core/start! context config)]
+           ;; Log started server(s) configuration(s) for debugging purposes
+           (doseq [started-server-context (:jetty10-servers started-context)]
+             ;; Server context data is in the form {:servername {:handlers <handlers>, ... }}
+             (let [server-name (name (first started-server-context))
+                   started-server ^org.eclipse.jetty.server.Server (:server (second started-server-context))
+                   connectors (.getConnectors started-server)]
+               (log/debug (i18n/trs "Jetty server {0} started with context: {1}" server-name (with-out-str (pprint started-server-context))))
+               (log/debug (i18n/trs "Jetty server {0} started with URI: {1} Stop timeout: {2} milliseconds."
+                                  server-name (.getURI started-server) (.getStopTimeout started-server)))
+               (doseq [^org.eclipse.jetty.server.Connector connector connectors
+                       connector-index (range 0 (count connectors))]
+                 (let [connector-name (or (.getName connector) connector-index)]
+                   (log/debug (i18n/trs "Jetty server {0} started with connector {1} with idle-timeout {2}." server-name connector-name (.getIdleTimeout connector)))
+                   (log/debug (i18n/trs "Jetty server {0} started with connector {1} protocols: {2}." server-name connector-name (.getProtocols connector)))))))
            (if-let [filesystem-watcher-service
                     (maybe-get-service this :FilesystemWatchService)]
              (let [watcher (watch-protocol/create-watcher filesystem-watcher-service {:recursive false})]
