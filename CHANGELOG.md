@@ -1,5 +1,8 @@
 ## unreleased changes
 
+## 1.0.16
+- adds debug logging of Jetty server configuration before and after server(s) have been started
+
 ## 1.0.15
 - cleans up accidental hard dependency on hato library in project.clj, hato is now only a dev dependency.
 
