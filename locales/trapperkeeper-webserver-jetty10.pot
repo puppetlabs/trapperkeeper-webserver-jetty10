@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: com.puppetlabs.trapperkeeper_webserver_jetty10 \n"
-"X-Git-Ref: 9044107fb020a56888b4851ca7069c82ca51e219\n"
+"X-Git-Ref: b00ec1706f2899730603212d7820da788ff22165\n"
 "Report-Msgid-Bugs-To: docs@puppet.com\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -230,6 +230,26 @@ msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_service.clj
 msgid "Starting web server(s)."
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_service.clj
+msgid "Jetty server(s) starting with config: {0}"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_service.clj
+msgid "Jetty server {0} started with context: {1}"
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_service.clj
+msgid "Jetty server {0} started with URI: {1} Stop timeout: {2} milliseconds."
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_service.clj
+msgid "Jetty server {0} started with connector {1} with idle-timeout {2}."
+msgstr ""
+
+#: src/puppetlabs/trapperkeeper/services/webserver/jetty10_service.clj
+msgid "Jetty server {0} started with connector {1} protocols: {2}."
 msgstr ""
 
 #: src/puppetlabs/trapperkeeper/services/webserver/jetty10_service.clj
