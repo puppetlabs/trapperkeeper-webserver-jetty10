@@ -1,5 +1,9 @@
 ## unreleased changes
 
+## 1.0.17
+- update jetty 10 to 10.0.20 to eliminate some race conditions
+- update clj-parent to the latest
+
 ## 1.0.16
 - adds debug logging of Jetty server configuration before and after server(s) have been started
 
