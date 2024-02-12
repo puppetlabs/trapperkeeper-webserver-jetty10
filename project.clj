@@ -1,4 +1,4 @@
-(def jetty-version "10.0.20")
+(def jetty-10-version "10.0.20")
 
 (defproject com.puppetlabs/trapperkeeper-webserver-jetty10 "1.0.18-SNAPSHOT"
   :description "A jetty10-based webserver implementation for use with the puppetlabs/trapperkeeper service framework."
@@ -8,7 +8,7 @@
 
   :min-lein-version "2.9.1"
 
-  :parent-project {:coords [puppetlabs/clj-parent "7.3.4"]
+  :parent-project {:coords [puppetlabs/clj-parent "7.3.5"]
                    :inherit [:managed-dependencies]}
 
   ;; Abort when version ranges or version conflicts are detected in
@@ -24,13 +24,17 @@
 
                  [javax.servlet/javax.servlet-api "4.0.1"]
                  ;; Jetty Webserver
-                 [org.eclipse.jetty/jetty-server ~jetty-version]
-                 [org.eclipse.jetty/jetty-servlet ~jetty-version]
-                 [org.eclipse.jetty/jetty-servlets ~jetty-version]
-                 [org.eclipse.jetty/jetty-webapp ~jetty-version]
-                 [org.eclipse.jetty/jetty-proxy ~jetty-version]
-                 [org.eclipse.jetty/jetty-jmx ~jetty-version]
-                 [org.eclipse.jetty.websocket/websocket-jetty-server ~jetty-version]
+                 [org.eclipse.jetty/jetty-server ~jetty-10-version]
+                 [org.eclipse.jetty/jetty-servlet ~jetty-10-version]
+                 [org.eclipse.jetty/jetty-servlets ~jetty-10-version]
+                 [org.eclipse.jetty/jetty-webapp ~jetty-10-version]
+                 [org.eclipse.jetty/jetty-proxy ~jetty-10-version]
+                 [org.eclipse.jetty/jetty-jmx ~jetty-10-version]
+                 [org.eclipse.jetty.websocket/websocket-jetty-server ~jetty-10-version]
+                 ;; used in pcp-client
+                 [org.eclipse.jetty.websocket/websocket-jetty-client ~jetty-10-version]
+                 [org.eclipse.jetty.websocket/websocket-jetty-api ~jetty-10-version]
+
 
                  [prismatic/schema]
                  [ring/ring-servlet]

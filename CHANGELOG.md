@@ -1,5 +1,9 @@
 ## unreleased changes
 
+## 1.0.18
+- update to clj-parent 7.3.5
+- add pcp-client jetty dependencies to dependency list, to allow them to be centrally managed 
+
 ## 1.0.17
 - update jetty 10 to 10.0.20 to eliminate some race conditions
 - update clj-parent to the latest
