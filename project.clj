@@ -1,6 +1,6 @@
 (def jetty-10-version "10.0.20")
 
-(defproject com.puppetlabs/trapperkeeper-webserver-jetty10 "1.0.18-SNAPSHOT"
+(defproject com.puppetlabs/trapperkeeper-webserver-jetty10 "1.0.18"
   :description "A jetty10-based webserver implementation for use with the puppetlabs/trapperkeeper service framework."
   :url "https://github.com/puppetlabs/trapperkeeper-webserver-jetty10"
   :license {:name "Apache License, Version 2.0"
