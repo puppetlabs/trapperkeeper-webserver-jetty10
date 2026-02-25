@@ -8,7 +8,7 @@
 
   :min-lein-version "2.9.1"
 
-  :parent-project {:coords [puppetlabs/clj-parent "7.3.5"]
+  :parent-project {:coords [puppetlabs/clj-parent "7.3.57"]
                    :inherit [:managed-dependencies]}
 
   ;; Abort when version ranges or version conflicts are detected in
